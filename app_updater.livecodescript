@@ -373,7 +373,7 @@ command _appCheckForUpdateInBackgroundCallback pError
       ## Is user skipping this version?
       set the wholematches to true
       put levureAppGet("version") & "." & levureAppGet("build") into tVersion
-      put lineoffset(tVersion, appGetPref("blacklisted app versions")) into tLineNo
+      put lineoffset(tVersion, prefsGetPref("blacklisted app versions")) into tLineNo
 
       if tLineNo is 0 then
         local tParamsA
