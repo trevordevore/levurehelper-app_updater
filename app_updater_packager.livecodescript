@@ -78,15 +78,15 @@ private function MacAppBundleFolder pBuildFolder
 end MacAppBundleFolder
 
 
-command processCopyFilesFile @pFiledata, pOutputFolder, pBuildProfile
+command processCopyFilesFile @xFiledata, pOutputFolder, pBuildProfile
   local tConfigA, tURLsA
 
   if levureAppHasProperty("app updater") then
     put levureAppGet("app updater") into tConfigA
-  end if
 
-  _autoUpdateURLs pBuildProfile, tConfigA, tURLsA
-  _replaceVariables pFiledata, pBuildProfile, tURLsA
+    _autoUpdateURLs pBuildProfile, tConfigA, tURLsA
+    _replaceVariables xFiledata, pBuildProfile, tURLsA
+  end if
 end processCopyFilesFile
 
 
