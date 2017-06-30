@@ -78,7 +78,7 @@ private function MacAppBundleFolder pBuildFolder
 end MacAppBundleFolder
 
 
-command processCopyFilesFile @xFiledata, pOutputFolder, pBuildProfile
+command processCopyFilesFile pBuildProfile, @xFiledata, pOutputFolder, pOutputFilename, pFileSettingsA
   local tConfigA, tURLsA
 
   if levureAppHasProperty("app updater") then
