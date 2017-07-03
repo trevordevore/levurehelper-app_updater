@@ -26,14 +26,21 @@ command finalizePackage pBuildProfile, pOutputFolder
   set the itemDelimiter to "/"
   put pOutputFolder & "/update/update.txt" into tFile
   put URL("file:" & tFile) into tData
+
+  put "https://www.bluemangolearning.com/download/screensteps/4_0/auto_update/" & \
+        tBuildProfile & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
+
   put "https://www.bluemangolearning.com/download/screensteps/4_0/" & \
         tBuildProfile & "/ScreenSteps%20" & levureAppGet("version") & ".exe" into line 6 of tData
+
   put tData into URL("file:"& tFile)
 end finalizePackage
 
 
 command packagingComplete pBuildProfile, pOutputFolder
   local tError, tUpdaterFolder
+
+  breakpoint
 
   set the itemdelimiter to "/"
 
