@@ -1,5 +1,5 @@
 script "App Updater Packager"
-command finalizePackageForBuildProfile pBuildProfile, pOutputFolder
+command finalizePackage pBuildProfile, pOutputFolder
   local tMacAppBundleFolder
   local tFile, tBuildProfile, tURL
 
@@ -29,10 +29,10 @@ command finalizePackageForBuildProfile pBuildProfile, pOutputFolder
   put "https://www.bluemangolearning.com/download/screensteps/4_0/" & \
         tBuildProfile & "/ScreenSteps%20" & levureAppGet("version") & ".exe" into line 6 of tData
   put tData into URL("file:"& tFile)
-end finalizePackageForBuildProfile
+end finalizePackage
 
 
-command postPackagForBuildProfile pBuildProfile, pOutputFolder
+command packagingComplete pBuildProfile, pOutputFolder
   local tError, tUpdaterFolder
 
   set the itemdelimiter to "/"
@@ -59,7 +59,7 @@ command postPackagForBuildProfile pBuildProfile, pOutputFolder
   if tError is not empty then
     answer error param(0) && tError
   end if
-end postPackagForBuildProfile
+end packagingComplete
 
 
 private function MacAppBundleFolder pBuildFolder
