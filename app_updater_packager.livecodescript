@@ -31,7 +31,7 @@ command finalizePackage pBuildProfile, pOutputFolder
         tBuildProfile & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
 
   put "https://www.bluemangolearning.com/download/screensteps/4_0/" & \
-        tBuildProfile & "/ScreenSteps%20" & levureAppGet("version") & ".exe" into line 6 of tData
+        tBuildProfile & "/ScreenSteps%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
 
   put tData into URL("file:"& tFile)
 end finalizePackage
