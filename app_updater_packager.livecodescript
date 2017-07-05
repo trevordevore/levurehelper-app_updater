@@ -40,8 +40,6 @@ end finalizePackage
 command packagingComplete pBuildProfile, pOutputFolder
   local tError, tUpdaterFolder
 
-  breakpoint
-
   set the itemdelimiter to "/"
 
   put pOutputFolder & "/update/" & _versionStringForFilenames() into tUpdaterFolder
