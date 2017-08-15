@@ -22,7 +22,7 @@ command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutput
 
         _autoUpdateURLs pBuildProfile, tURLsA
         if tURLsA["build profile"] is not empty then
-          put tURLsA["build profile"] & "/screensteps_appcast.xml" into tURL
+          put tURLsA["build profile"] & "/appcast.xml" into tURL
         end if
       end if
       replace "[[SPARKLE_URL]]" with tURL in tData
