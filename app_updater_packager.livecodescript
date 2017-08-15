@@ -35,6 +35,13 @@ end finalizePackageForPlatform
 
 command packagingComplete pBuildProfile, pOutputFolder
   local tError, tBuildProfile, tFile, tData, tUpdaterFolder, tURLsA
+  local tAppExecutable, tAppExecutableName
+
+  set the itemdelimiter to "/"
+  put the last item of levureStandaloneFilename() into tAppExecutable
+  set the itemDelimiter to "."
+  put item 1 of tAppExecutable into tAppExecutableName
+  replace space with "%20" in tAppExecutableName
 
   set the itemdelimiter to "/"
 
@@ -48,7 +55,7 @@ command packagingComplete pBuildProfile, pOutputFolder
   _autoUpdateURLs pBuildProfile, tURLsA
 
   put tURLsA["build profile"] & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
-  put tURLsA["build profile"] & "/Clarify%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
+  put tURLsA["build profile"] & "/" & tAppExecutableName & "%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
 
   put tData into URL("file:"& tFile)
 
@@ -58,7 +65,7 @@ command packagingComplete pBuildProfile, pOutputFolder
   if tError is empty then
     local tAppBundle, tCmd
 
-    put pOutputFolder & "/macos/" & the last item of levureStandaloneFilename() into tAppBundle
+    put pOutputFolder & "/macos/" & tAppExecutable into tAppBundle
     if there is a folder tAppBundle then
       dispatch "packagerCreateAllFoldersInPath" to stack "Levure Framework Application Packager" with tUpdaterFolder, pOutputFolder
       put the result into tError
