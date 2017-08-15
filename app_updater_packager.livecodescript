@@ -1,47 +1,58 @@
 script "App Updater Packager"
-command finalizePackage pBuildProfile, pOutputFolder
-  local tMacAppBundleFolder
-  local tFile, tBuildProfile, tURL
+command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutputFolder
+  local tFile, tData, tBuildProfile, tURL
 
-  put MacAppBundleFolder(pOutputFolder) into tMacAppBundleFolder
+  switch pPlatform
+    case "macos"
+      local tAppBundle
 
-  ## Update plist file
-  local tData
+      put folders(pOutputFolder) into tAppBundle
+      filter tAppBundle with "*.app"
 
-  put tMacAppBundleFolder & "/Contents/Info.plist" into tFile
-  put URL("binfile:" & tFile) into tData
+      put pOutputFolder & "/" & tAppBundle & "/Contents/Info.plist" into tFile
+      put URL("binfile:" & tFile) into tData
 
-  put pBuildProfile into tBuildProfile
-  put tolower(tBuildProfile) into tBuildProfile
-  replace space with "_" in tBuildProfile
+      put pBuildProfile into tBuildProfile
+      put tolower(tBuildProfile) into tBuildProfile
+      replace space with "_" in tBuildProfile
 
-  ## sparkle URL
-  put "https://www.bluemangolearning.com/download/screensteps/4_0/auto_update/" & tBuildProfile & "/screensteps_appcast.xml" into tURL
-  replace "[[SPARKLE_URL]]" with tURL in tData
+      ## sparkle URL
+      if pBuildProfile is not "mac app store" then
+        local tURLsA
 
-  put tData into URL("binfile:" & tFile)
-  ## End update plist
+        _autoUpdateURLs pBuildProfile, tURLsA
+        if tURLsA["build profile"] is not empty then
+          put tURLsA["build profile"] & "/screensteps_appcast.xml" into tURL
+        end if
+      end if
+      replace "[[SPARKLE_URL]]" with tURL in tData
 
-  ## Path to Windows installer in update.txt
-  set the itemDelimiter to "/"
-  put pOutputFolder & "/update/update.txt" into tFile
-  put URL("file:" & tFile) into tData
-
-  put "https://www.bluemangolearning.com/download/screensteps/4_0/auto_update/" & \
-        tBuildProfile & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
-
-  put "https://www.bluemangolearning.com/download/screensteps/4_0/" & \
-        tBuildProfile & "/ScreenSteps%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
-
-  put tData into URL("file:"& tFile)
-end finalizePackage
+      put tData into URL("binfile:" & tFile)
+      break
+  end switch
+end finalizePackageForPlatform
 
 
 command packagingComplete pBuildProfile, pOutputFolder
-  local tError, tUpdaterFolder
+  local tError, tBuildProfile, tFile, tData, tUpdaterFolder, tURLsA
 
   set the itemdelimiter to "/"
 
+  ## Path to Windows installer in update.txt
+  put pBuildProfile into tBuildProfile
+      put tolower(tBuildProfile) into tBuildProfile
+      replace space with "_" in tBuildProfile
+  put pOutputFolder & "/update/update.txt" into tFile
+  put URL("file:" & tFile) into tData
+
+  _autoUpdateURLs pBuildProfile, tURLsA
+
+  put tURLsA["build profile"] & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
+  put tURLsA["build profile"] & "/Clarify%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
+
+  put tData into URL("file:"& tFile)
+
+  # Create ZIP file for macos updater
   put pOutputFolder & "/update/" & _versionStringForFilenames() into tUpdaterFolder
 
   if tError is empty then
@@ -67,31 +78,11 @@ command packagingComplete pBuildProfile, pOutputFolder
 end packagingComplete
 
 
-private function MacAppBundleFolder pBuildFolder
-  local tMacFolder, tMacApp
-
-  put pBuildFolder & "/macos" into tMacFolder
-
-  put folders(tMacFolder) into tMacApp
-  filter tMacApp with "*.app"
-
-  if tMacApp is not empty then
-    return tMacFolder & "/" & tMacApp
-  else
-    return empty
-  end if
-end MacAppBundleFolder
-
-
 command processCopyFilesFile pBuildProfile, @xFiledata, pOutputFolder, pOutputFilename, pFileSettingsA
-  local tConfigA, tURLsA
+  local tURLsA
 
-  if levureAppHasProperty("app updater") then
-    put levureAppGet("app updater") into tConfigA
-
-    _autoUpdateURLs pBuildProfile, tConfigA, tURLsA
-    _replaceVariables xFiledata, pBuildProfile, tURLsA
-  end if
+  _autoUpdateURLs pBuildProfile, tURLsA
+  _replaceVariables xFiledata, pBuildProfile, tURLsA
 end processCopyFilesFile
 
 
@@ -108,20 +99,32 @@ private command _replaceVariables @xFileData, pBuildProfile, pURLsA
 end _replaceVariables
 
 
-private command _autoUpdateURLs pBuildProfile, pSettingsA, @rURLsA
-  put tolower(pBuildProfile) into pBuildProfile
+private command _autoUpdateURLs pBuildProfile, @rURLsA
+  local tSettingsA
 
-  # Auto Update URLs
-  put pSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
-  if rURLsA["root"] is empty then
-    put pSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
-  end if
-  if rURLsA["root"] is not empty then
-    set the itemdelimiter to "/"
+  put empty into rURLsA
+  put empty into rURLsA["root"]
+  put empty into rURLsA["build profile"]
+  put empty into rURLsA["version"]
+  put empty into rURLsA["macos"]
 
-    put rURLsA["root"] & "/" & pBuildProfile into rURLsA["build profile"]
-    put rURLsA["build profile"] & "/" & _versionStringForFilenames() into rURLsA["version"]
-    put rURLsA["version"] & "/" & the last item of levureStandaloneFilename() & ".zip" into rURLsA["osx"]
+  if levureAppHasProperty("app updater") then
+    put levureAppGet("app updater") into tSettingsA
+
+    put tolower(pBuildProfile) into pBuildProfile
+
+    # Auto Update URLs
+    put tSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
+    if rURLsA["root"] is empty then
+      put tSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
+    end if
+    if rURLsA["root"] is not empty then
+      set the itemdelimiter to "/"
+
+      put rURLsA["root"] & "/" & pBuildProfile into rURLsA["build profile"]
+      put rURLsA["build profile"] & "/" & _versionStringForFilenames() into rURLsA["version"]
+      put rURLsA["version"] & "/" & the last item of levureStandaloneFilename() & ".zip" into rURLsA["macos"]
+    end if
   end if
 
   return empty
