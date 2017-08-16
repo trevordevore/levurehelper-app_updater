@@ -17,13 +17,11 @@ command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutput
       replace space with "_" in tBuildProfile
 
       ## sparkle URL
-      if pBuildProfile is not "mac app store" then
-        local tURLsA
+      local tURLsA
 
-        _autoUpdateURLs pBuildProfile, tURLsA
-        if tURLsA["build profile"] is not empty then
-          put tURLsA["build profile"] & "/appcast.xml" into tURL
-        end if
+      _autoUpdateURLs pBuildProfile, tURLsA
+      if tURLsA["build profile"] is not empty then
+        put tURLsA["build profile"] & "/appcast.xml" into tURL
       end if
       replace "[[SPARKLE_URL]]" with tURL in tData
 
