@@ -77,9 +77,6 @@ command packagingComplete pBuildProfile, pOutputFolder
 
   _autoUpdateURLs pBuildProfile, tURLsA
 
-  put tURLsA["build profile"] & "/" & levureAppGet("version") & "-" & levureAppGet("build") & "/release-notes-win.html" into line 4 of tData
-  put tURLsA["build profile"] & "/" & tAppExecutableName & "%20" & levureAppGet("version") & "-" & levureAppGet("build") & ".exe" into line 6 of tData
-
   put tData into URL("file:"& tFile)
 
   # Create ZIP file for macos updater
