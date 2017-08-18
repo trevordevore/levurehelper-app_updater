@@ -12,4 +12,3 @@ register components:
     destination: update
     callback stackfile: app_updater_packager.livecodescript
 packager callbacks stackfile: app_updater_packager.livecodescript
-build profiles filter: '!mac app store,!mac app store development'
