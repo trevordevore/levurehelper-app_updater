@@ -1,4 +1,26 @@
 script "App Updater Packager"
+/**
+Summary: Add `auto update url` to app configuration array.
+
+Description:
+In a packaged application `appCheckForUpdates` will use the `auto update url` property. Set that here.
+*/
+command finalizePackagedAssets pBuildProfile, pPlatform, @xAppA, pAppFolder
+  local tURLsA
+
+  if pPlatform is "windows" then
+    _autoUpdateURLs pBuildProfile, tURLsA
+
+    put tURLsA["build profile"] & "/update.txt" into xAppA["auto update url"]
+    answer xAppA["auto update url"]
+  end if
+end finalizePackagedAssets
+
+
+/**
+Summary: Replace the [[SPARKLE_URL]] variable in the Info.plist file with the correct url.
+
+*/
 command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutputFolder
   local tFile, tData, tBuildProfile, tURL
 
@@ -31,6 +53,10 @@ command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutput
 end finalizePackageForPlatform
 
 
+/**
+Summary: Zip up the Sparkle update for macos. Fill in the update.txt file for Windows.
+
+*/
 command packagingComplete pBuildProfile, pOutputFolder
   local tError, tBuildProfile, tFile, tData, tUpdaterFolder, tURLsA
   local tAppExecutable, tAppExecutableName
@@ -83,6 +109,10 @@ command packagingComplete pBuildProfile, pOutputFolder
 end packagingComplete
 
 
+/**
+Summary: Replace variables within files being copied as part of `copy files` > `app updater`.
+
+*/
 command processCopyFilesFile pBuildProfile, @xFiledata, pOutputFolder, pOutputFilename, pFileSettingsA
   local tURLsA
 
