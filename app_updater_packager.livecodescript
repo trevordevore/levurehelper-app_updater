@@ -12,7 +12,6 @@ command finalizePackagedAssets pBuildProfile, pPlatform, @xAppA, pAppFolder
     _autoUpdateURLs pBuildProfile, tURLsA
 
     put tURLsA["build profile"] & "/update.txt" into xAppA["auto update url"]
-    answer xAppA["auto update url"]
   end if
 end finalizePackagedAssets
 
