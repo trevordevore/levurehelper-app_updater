@@ -10,7 +10,7 @@ local sNumberOfDownloadTries
  * \brief Call when application starts up to check for an update in background.
  */
 command appCheckForUpdateInBackground
-  if _killUpdater() then
+  if not _killUpdater() then
     send "_appCheckForUpdateInBackground" to me in 10 milliseconds
   end if
 end appCheckForUpdateInBackground
