@@ -200,6 +200,8 @@ end _appCheckForUpdateInBackground
 command _appUpdaterInfoDownloaded pUrl, pUrlStatus
   local tFileContent, tError
 
+  put _resolveURLStatus(pUrl, pUrlStatus, param(3)) into pUrlStatus
+
   switch pUrlStatus
     case "cached"
       put url pUrl into tFileContent
@@ -251,6 +253,8 @@ end _appUpdaterInfoDownloaded
 command _appUpdaterChangeLogDownloaded pUrl, pUrlStatus
   local tError
 
+  put _resolveURLStatus(pUrl, pUrlStatus, param(3)) into pUrlStatus
+
   switch pUrlStatus
     case "cached"
       put url pUrl into sAppUpdateStructure["change log"]
@@ -288,6 +292,8 @@ end _appUpdaterChangeLogDownloaded
 
 command _appUpdaterDialogDownloaded pUrl, pUrlStatus
   local tError
+
+  put _resolveURLStatus(pUrl, pUrlStatus, param(3)) into pUrlStatus
 
   switch pUrlStatus
     case "cached"
@@ -462,6 +468,9 @@ end _killUpdater
 * \return Error message
 */
 command _appUpdaterDownloaded pURL, pURLStatus
+
+  put _resolveURLStatus(pUrl, pUrlStatus, param(3)) into pUrlStatus
+
   switch pURLStatus
     case "timeout"
     case "socket timeout" ## ssl may return this error during timeout
@@ -605,3 +614,19 @@ private function _compareVersionStrings pString1, pOperator, pString2
 
   return tBoolean
 end _compareVersionStrings
+
+
+
+private function _resolveURLStatus pUrl, pUrlStatus, pError
+  if pUrlStatus is "error" then
+    if pError is empty then
+      put libURLErrorData(pUrl) into pError
+    end if
+
+    if pError is "error cancelled" then
+      put "cancelled" into pUrlStatus
+    end if
+  end if
+
+  return pUrlStatus
+end _resolveURLStatus
