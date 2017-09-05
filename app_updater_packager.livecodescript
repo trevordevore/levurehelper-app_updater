@@ -118,6 +118,7 @@ end processCopyFilesFile
 
 
 private command _replaceVariables @xFileData, pBuildProfile, pURLsA
+  replace textEncode("[[WINDOWS_INSTALLER_URL]]", "utf8") with pURLsA["windows installer"] in xFileData
   replace textEncode("[[ROOT_AUTOUPDATE_URL]]", "utf8") with pURLsA["root"] in xFileData
   replace textEncode("[[BUILD_AUTOUPDATE_URL]]", "utf8") with pURLsA["version"] in xFileData
   replace textEncode("[[BUILDPROFILE_AUTOUPDATE_URL]]", "utf8") with pURLsA["build profile"] in xFileData
@@ -138,6 +139,7 @@ private command _autoUpdateURLs pBuildProfile, @rURLsA
   put empty into rURLsA["build profile"]
   put empty into rURLsA["version"]
   put empty into rURLsA["macos"]
+  put empty into rURLsA["windows installer"]
 
   if levureAppHasProperty("app updater") then
     put levureAppGet("app updater") into tSettingsA
@@ -145,6 +147,10 @@ private command _autoUpdateURLs pBuildProfile, @rURLsA
     put tolower(pBuildProfile) into pBuildProfile
 
     # Auto Update URLs
+    put tSettingsA[pBuildProfile]["windows installer url"] into rURLsA["windows installer"]
+    if rURLsA["windows installer"] is empty then
+      put tSettingsA["all profiles"]["windows installer url"] into rURLsA["windows installer"]
+    end if
     put tSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
     if rURLsA["root"] is empty then
       put tSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
