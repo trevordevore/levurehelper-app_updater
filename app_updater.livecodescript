@@ -90,7 +90,7 @@ command appPromptUserToUpdate pParamsA
   local tErrorMsg, tError
 
   if there is not a stack "appUpdateDialog" then
-    put "Unable to load update description window." into tErrorMsg
+    put "unable to load update description window" into tErrorMsg
 
     if sAppUpdateStructure["updater dialog"] is not empty then
       try
@@ -116,11 +116,11 @@ command appPromptUserToUpdate pParamsA
 
       if tError is not empty then
         ## Stack didn't load properly
-        _DisplayError tErrorMsg
+        _DisplayError "open the updater dialog", tErrorMsg
         set the dialogData to "cancel"
       end if
     else
-      _DisplayError tErrorMsg
+      _DisplayError "load the updater dialog", tErrorMsg
       set the dialogData to "cancel"
     end if
   else
@@ -192,7 +192,7 @@ command _appCheckForUpdateInBackground
   end if
 
   if tError is not empty then
-    _DisplayError tError
+    _DisplayError "check for updates in the background", tError
   end if
 end _appCheckForUpdateInBackground
 
@@ -364,7 +364,7 @@ command _appPromptUserToUpdateIfAvailableCallback pError
       dispatch sCallbacksA["update"]["handler"] with pError
     end if
   else if pError is not empty then
-    _DisplayError pError
+    _DisplayError "prompt to update", pError
   end if
 
   delete local sCallbacksA["update"]
@@ -395,7 +395,7 @@ command _appCheckForUpdateInBackgroundCallback pError
   end if
 
   if pError is not empty then
-    _DisplayError pError
+    _DisplayError "verify an update in the background", pError
   end if
 end _appCheckForUpdateInBackgroundCallback
 
@@ -480,15 +480,15 @@ command _appUpdaterDownloaded pURL, pURLStatus
 
         load URL pURL with message "_appUpdaterDownloaded"
         if the result is not empty then
-          _DisplayError libURLErrorData(pURL)
+          _DisplayError "download the updater", libURLErrorData(pURL)
         end if
       else
-        _DisplayError "server didn't respond in time"
+        _DisplayError "download the updater", "server didn't respond in time"
       end if
       break
 
     case "error"
-      _DisplayError libURLErrorData(pURL)
+      _DisplayError "download the updater", libURLErrorData(pURL)
       break
 
     case "cached"
@@ -524,8 +524,8 @@ private command _appValidateAndLaunchUpdater
 end _appValidateAndLaunchUpdater
 
 
-private command _DisplayError pMsg
-  answer error "An error occurred while trying to download the updater:" && pMsg & "."
+private command _DisplayError pContext, pMsg
+  answer error "An error occurred while trying to" && pContext & ":" && pMsg & "."
 end _DisplayError
 
 
