@@ -118,14 +118,14 @@ end processCopyFilesFile
 
 
 private command _replaceVariables @xFileData, pBuildProfile, pURLsA
+  replace textEncode("[[ROOT_AUTOUPDATE_URL]]", "utf8") with pURLsA["root"] in xFileData
+  replace textEncode("[[BUILD_AUTOUPDATE_URL]]", "utf8") with pURLsA["version"] in xFileData
+  replace textEncode("[[BUILDPROFILE_AUTOUPDATE_URL]]", "utf8") with pURLsA["build profile"] in xFileData
   replace textEncode("[[VERSION]]", "utf8") with levureAppGet("version") in xFileData
   replace textEncode("[[BUILD]]", "utf8") with levureAppGet("build") in xFileData
   replace textEncode("[[ENGINE_VERSION]]", "utf8") with the version & "." & the buildNumber in xFileData
   replace textEncode("[[BUILD_PROFILE]]", "utf8") with tolower(pBuildProfile) in xFileData
   replace textEncode("[[INTERNET_DATE]]", "utf8") with the internet date in xFileData
-  replace textEncode("[[ROOT_AUTOUPDATE_URL]]", "utf8") with pURLsA["root"] in xFileData
-  replace textEncode("[[BUILD_AUTOUPDATE_URL]]", "utf8") with pURLsA["version"] in xFileData
-  replace textEncode("[[BUILDPROFILE_AUTOUPDATE_URL]]", "utf8") with pURLsA["build profile"] in xFileData
   return empty
 end _replaceVariables
 
