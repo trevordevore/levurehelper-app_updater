@@ -86,6 +86,17 @@ app updater:
     root auto update url: https://www.MY-SERVER.com/download/MY-APP/MY-APP-VERSION/auto_update
 ```
 
+## Updating Info.plist on macOS
+
+On macOS you will need to customize the Info.plist file and add the following key/value:
+
+```
+<key>SUFeedURL</key>
+<string>[[SPARKLE_URL]]</string>
+```
+
+During the packaging process Levure will replace `[[SPARKLE_URL]]` with the appcast.xml url.
+
 ## Packaging your application
 
 When you package an application an `update` folder will be added to the output folder (sits alongside a `macos` or `windows` folder). The `update` folder will contain one folder and two files:
