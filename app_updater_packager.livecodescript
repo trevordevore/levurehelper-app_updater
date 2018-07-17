@@ -6,21 +6,19 @@ Description:
 In a packaged application `appCheckForUpdates` will use the `auto update url` property. Set that here.
 */
 command finalizePackagedAssets pBuildProfile, pPlatform, @xAppA, pAppFolder
-  local tURLsA
+  local tUpdateVarsA
 
-  if pPlatform is "windows" then
-    _autoUpdateURLs pBuildProfile, tURLsA
+  _autoUpdateVariables pBuildProfile, tUpdateVarsA
 
-    put tURLsA["build profile"] & "/update.txt" into xAppA["auto update url"]
-  end if
+  put tUpdateVarsA["build profile"] & "/appcast.xml" into xAppA["appcast url"]
 end finalizePackagedAssets
 
 
 /**
-Summary: Replace the [[SPARKLE_URL]] variable in the Info.plist file with the correct url.
+Summary: Replace the [[SUFeedURL]] variable in the Info.plist file with the correct url.
 
 */
-command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutputFolder
+command finalizePackageForPlatform pBuildProfile, pPlatform, pAppA, pAppFolder, pOutputFolder
   local tFile, tData, tBuildProfile, tURL
 
   switch pPlatform
@@ -38,13 +36,7 @@ command finalizePackageForPlatform pBuildProfile, pPlatform, pAppFolder, pOutput
       replace space with "_" in tBuildProfile
 
       ## sparkle URL
-      local tURLsA
-
-      _autoUpdateURLs pBuildProfile, tURLsA
-      if tURLsA["build profile"] is not empty then
-        put tURLsA["build profile"] & "/appcast.xml" into tURL
-      end if
-      replace "[[SPARKLE_URL]]" with tURL in tData
+      replace "[[SUFeedURL]]" with pAppA["appcast url"] in tData
 
       put tData into URL("binfile:" & tFile)
       break
@@ -53,55 +45,19 @@ end finalizePackageForPlatform
 
 
 /**
-Summary: Zip up the Sparkle update for macos. Fill in the update.txt file for Windows.
+Summary: Create folder where release_notes.html file goes
+
+Description:
+Create a folder that has the right name for uploading. Don't make the
+developer guess.
 
 */
 command packagingComplete pBuildProfile, pOutputFolder
-  local tError, tBuildProfile, tFile, tData, tUpdaterFolder, tURLsA
-  local tAppExecutable, tAppExecutableName
+  local tUpdaterFolder
 
-  set the itemdelimiter to "/"
-  put the last item of levureStandaloneFilename() into tAppExecutable
-  set the itemDelimiter to "."
-  put item 1 of tAppExecutable into tAppExecutableName
-  replace space with "%20" in tAppExecutableName
-
-  set the itemdelimiter to "/"
-
-  ## Path to Windows installer in update.txt
-  put pBuildProfile into tBuildProfile
-      put tolower(tBuildProfile) into tBuildProfile
-      replace space with "_" in tBuildProfile
-  put pOutputFolder & "/update/update.txt" into tFile
-  put URL("file:" & tFile) into tData
-
-  _autoUpdateURLs pBuildProfile, tURLsA
-
-  put tData into URL("file:"& tFile)
-
-  # Create ZIP file for macos updater
   put pOutputFolder & "/update/" & _versionStringForFilenames() into tUpdaterFolder
-
-  if tError is empty then
-    local tAppBundle, tCmd
-
-    put pOutputFolder & "/macos/" & tAppExecutable into tAppBundle
-    if there is a folder tAppBundle then
-      dispatch "packagerCreateAllFoldersInPath" to stack "Levure Framework Application Packager" with tUpdaterFolder, pOutputFolder
-      put the result into tError
-
-      put format("cd \"%s\";ditto -ck --rsrc --keepParent \"%s\" \"%s\"", item 1 to -2 of tAppBundle, \
-            the last item of tAppBundle, tUpdaterFolder & "/" & the last item of tAppBundle & ".zip") into tCmd
-      get shell(tCmd)
-      if the result > 0 then
-        put it into tError
-      end if
-    end if
-  end if
-
-  if tError is not empty then
-    answer error param(0) && tError
-  end if
+  dispatch "packagerCreateAllFoldersInPath" to stack "Levure Framework Application Packager" \
+        with tUpdaterFolder, pOutputFolder
 end packagingComplete
 
 
@@ -110,28 +66,30 @@ Summary: Replace variables within files being copied as part of `copy files` > `
 
 */
 command processCopyFilesFile pBuildProfile, @xFiledata, pOutputFolder, pOutputFilename, pFileSettingsA
-  local tURLsA
+  local tUpdateVarsA
 
-  _autoUpdateURLs pBuildProfile, tURLsA
-  _replaceVariables xFiledata, pBuildProfile, tURLsA
+  _autoUpdateVariables pBuildProfile, tUpdateVarsA
+  _replaceVariables xFiledata, pBuildProfile, tUpdateVarsA
 end processCopyFilesFile
 
 
 private command _replaceVariables @xFileData, pBuildProfile, pURLsA
-  replace textEncode("[[WINDOWS_INSTALLER_URL]]", "utf8") with pURLsA["windows installer"] in xFileData
   replace textEncode("[[ROOT_AUTOUPDATE_URL]]", "utf8") with pURLsA["root"] in xFileData
   replace textEncode("[[BUILD_AUTOUPDATE_URL]]", "utf8") with pURLsA["version"] in xFileData
   replace textEncode("[[BUILDPROFILE_AUTOUPDATE_URL]]", "utf8") with pURLsA["build profile"] in xFileData
   replace textEncode("[[VERSION]]", "utf8") with levureAppGet("version") in xFileData
   replace textEncode("[[BUILD]]", "utf8") with levureAppGet("build") in xFileData
   replace textEncode("[[ENGINE_VERSION]]", "utf8") with the version & "." & the buildNumber in xFileData
-  replace textEncode("[[BUILD_PROFILE]]", "utf8") with tolower(pBuildProfile) in xFileData
+  replace textEncode("[[BUILD_PROFILE]]", "utf8") with rawURLEncode(tolower(pBuildProfile)) in xFileData
   replace textEncode("[[INTERNET_DATE]]", "utf8") with the internet date in xFileData
+  replace textEncode("[[WIN_INSTALLER_ARGUMENTS]]", "utf8") with pURLsA["windows installer arguments"] in xFiledata
+  replace textEncode("[[MACOS_INSTALLER_NAME]]", "utf8") with rawURLEncode(pURLsA["macos installer name"]) in xFiledata
+  replace textEncode("[[WINDOWS_INSTALLER_NAME]]", "utf8") with rawURLEncode(pURLsA["windows installer name"]) in xFiledata
   return empty
 end _replaceVariables
 
 
-private command _autoUpdateURLs pBuildProfile, @rURLsA
+private command _autoUpdateVariables pBuildProfile, @rURLsA
   local tSettingsA
 
   put empty into rURLsA
@@ -146,11 +104,6 @@ private command _autoUpdateURLs pBuildProfile, @rURLsA
 
     put tolower(pBuildProfile) into pBuildProfile
 
-    # Auto Update URLs
-    put tSettingsA[pBuildProfile]["windows installer url"] into rURLsA["windows installer"]
-    if rURLsA["windows installer"] is empty then
-      put tSettingsA["all profiles"]["windows installer url"] into rURLsA["windows installer"]
-    end if
     put tSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
     if rURLsA["root"] is empty then
       put tSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
@@ -158,16 +111,55 @@ private command _autoUpdateURLs pBuildProfile, @rURLsA
     if rURLsA["root"] is not empty then
       set the itemdelimiter to "/"
 
-      put rURLsA["root"] & "/" & pBuildProfile into rURLsA["build profile"]
+      put rURLsA["root"] & "/" & rawURLEncode(pBuildProfile) into rURLsA["build profile"]
       put rURLsA["build profile"] & "/" & _versionStringForFilenames() into rURLsA["version"]
-      put rURLsA["version"] & "/" & the last item of levureStandaloneFilename() & ".zip" into rURLsA["macos"]
+    end if
+
+    put tSettingsA[pBuildProfile]["windows installer arguments"] into rURLsA["windows installer arguments"]
+    if rURLsA["windows installer arguments"] is empty then
+      put tSettingsA["all profiles"]["windows installer arguments"] into rURLsA["windows installer arguments"]
     end if
   end if
 
+  local tProfilesA, tDefaultName
+
+  put levureAppGet("build profiles") into tProfilesA
+
+  put tProfilesA[pBuildProfile]["installer name"]["all platforms"] into tDefaultName
+  if tDefaultName is empty then
+    put tProfilesA["all profiles"]["installer name"]["all platforms"] into tDefaultName
+  end if
+
+  put tProfilesA[pBuildProfile]["installer name"]["macos"] into rURLsA["macos installer name"]
+  if rURLsA["macos installer name"] is empty then
+    put tProfilesA["all profiles"]["installer name"]["macos"] into rURLsA["macos installer name"]
+  end if
+  if rURLsA["macos installer name"] is empty then
+    put tDefaultName into rURLsA["macos installer name"]
+  end if
+
+  put tProfilesA[pBuildProfile]["installer name"]["windows"] into rURLsA["windows installer name"]
+  if rURLsA["installer name"] is empty then
+    put tProfilesA["all profiles"]["installer name"]["windows"] into rURLsA["windows installer name"]
+  end if
+  if rURLsA["windows installer name"] is empty then
+    put tDefaultName into rURLsA["windows installer name"]
+  end if
+
   return empty
-end _autoUpdateURLs
+end _autoUpdateVariables
 
 
 private function _versionStringForFilenames
   return levureAppGet("version") & "-" & levureAppGet("build")
 end _versionStringForFilenames
+
+
+-- RFC 1738 compliant
+-- http://www.faqs.org/rfcs/rfc1738
+function rawURLEncode pString
+  put URLEncode(pString) into pString
+  replace "+" with "%20" in pString
+  replace "*" with "%2A" in pString
+  return pString
+end rawURLEncode

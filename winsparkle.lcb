@@ -1,0 +1,458 @@
+library community.livecode.trevordevore.winsparkle
+
+  /*
+  URLs of interest:
+
+  - https://sparkle-project.org/documentation/
+  - https://sparkle-project.org/documentation/customization/
+  */
+
+  use com.livecode.foreign
+  use com.livecode.engine
+  use com.livecode.file
+
+  metadata title is "WinSparkle"
+  metadata author is "TrevorDeVore"
+  metadata version is "0.1.0"
+
+  private foreign handler win_sparkle_init() \
+        returns nothing binds to "c:winsparkle>win_sparkle_init!cdecl"
+  private foreign handler win_sparkle_cleanup() \
+        returns nothing binds to "c:winsparkle>win_sparkle_cleanup!cdecl"
+
+  private foreign handler win_sparkle_set_lang(in pLang as ZStringNative) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_lang!cdecl"
+  private foreign handler win_sparkle_set_langid(in pLangId as CUShort) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_langid!cdecl"
+
+  private foreign handler win_sparkle_set_appcast_url(in pUrl as ZStringNative) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_appcast_url!cdecl"
+  private foreign handler win_sparkle_set_dsa_pub_pem(in pPublicKey as ZStringNative) \
+        returns CBool binds to "c:winsparkle>win_sparkle_set_dsa_pub_pem!cdecl"
+  private foreign handler win_sparkle_set_app_details(in pCompanyName as ZStringUTF16, in pAppName as ZStringUTF16, in pAppVersion as ZStringUTF16) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_app_details!cdecl"
+
+  private foreign handler win_sparkle_set_app_build_version(in pBuild as ZStringUTF16) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_app_build_version!cdecl"
+  private foreign handler win_sparkle_set_registry_path(in pPath as ZStringNative) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_registry_path!cdecl"
+
+  private foreign handler win_sparkle_set_automatic_check_for_updates(in pState as CBool) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_automatic_check_for_updates!cdecl"
+  private foreign handler win_sparkle_get_automatic_check_for_updates() \
+        returns CBool binds to "c:winsparkle>win_sparkle_get_automatic_check_for_updates!cdecl"
+  private foreign handler win_sparkle_set_update_check_interval(in pInterval as CInt) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_update_check_interval!cdecl"
+  private foreign handler win_sparkle_get_update_check_interval() \
+        returns CInt binds to "c:winsparkle>win_sparkle_get_update_check_interval!cdecl"
+  private foreign handler win_sparkle_get_last_check_time() \
+        returns CInt binds to "c:winsparkle>win_sparkle_get_last_check_time!cdecl"
+
+  private foreign handler win_sparkle_check_update_with_ui() \
+        returns nothing binds to "c:winsparkle>win_sparkle_check_update_with_ui!cdecl"
+  private foreign handler win_sparkle_check_update_with_ui_and_install() \
+        returns nothing binds to "c:winsparkle>win_sparkle_check_update_with_ui_and_install!cdecl"
+  private foreign handler win_sparkle_check_update_without_ui() \
+        returns nothing binds to "c:winsparkle>win_sparkle_check_update_without_ui!cdecl"
+
+
+  foreign handler type win_sparkle_error_callback_t() returns nothing
+  foreign handler type win_sparkle_can_shutdown_callback_t() returns CInt
+  foreign handler type win_sparkle_shutdown_request_callback_t() returns nothing
+  foreign handler type win_sparkle_did_find_update_callback_t() returns nothing
+  foreign handler type win_sparkle_did_not_find_update_callback_t() returns nothing
+  foreign handler type win_sparkle_update_cancelled_callback_t() returns nothing
+
+  foreign handler win_sparkle_set_error_callback (in pHandler as win_sparkle_error_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_error_callback!cdecl"
+  foreign handler win_sparkle_set_can_shutdown_callback (in pHandler as win_sparkle_can_shutdown_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_can_shutdown_callback!cdecl"
+  foreign handler win_sparkle_set_shutdown_request_callback (in pHandler as win_sparkle_shutdown_request_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_shutdown_request_callback!cdecl"
+  foreign handler win_sparkle_set_did_find_update_callback (in pHandler as win_sparkle_did_find_update_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_did_find_update_callback!cdecl"
+  foreign handler win_sparkle_set_did_not_find_update_callback (in pHandler as win_sparkle_did_not_find_update_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_did_not_find_update_callback!cdecl"
+  foreign handler win_sparkle_set_update_cancelled_callback (in pHandler as win_sparkle_update_cancelled_callback_t) \
+        returns nothing binds to "c:winsparkle>win_sparkle_set_update_cancelled_callback!cdecl"
+
+
+  /* VARIABLES */
+
+
+  /* PUBLIC HANDLERS */
+
+  /**
+  Summary: Starts WinSparkle.
+
+  Description:
+
+  If WinSparkle is configured to check for updates on startup, proceeds
+  to perform the check. You should only call this function when your app
+  is initialized and shows its main window.
+
+  This call doesn't block and returns almost immediately. If an update is available,
+  the respective UI is shown later from a separate thread.
+
+  Returns: nothing
+  */
+  public handler winSparkleInitialize() returns nothing
+    unsafe
+      SetupCallbacks()
+      win_sparkle_init()
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Call when your application is shutting down.
+
+  Description:
+  Cancels any pending Sparkle operations and shuts down its helper threads.
+
+  Returns: nothing
+  */
+  public handler winSparkleCleanup() returns nothing
+    unsafe
+      win_sparkle_cleanup()
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Sets UI language from its ISO code.
+
+  Description:
+  Only set this if you don't want the current UI language to be used.
+  This must be called before sparkleInitialize().
+
+  Returns: nothing
+  */
+  public handler winSparkleSetLanguage(in pISOCode as String) returns nothing
+    unsafe
+      win_sparkle_set_lang(pISOCode)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Sets UI language from its Win32 LANGID code.
+
+  Description:
+  Only set this if you don't want the current UI language to be used.
+  This must be called before sparkleInitialize().
+
+  Returns: nothing
+  */
+  public handler winSparkleSetLanguageId(in pLangId as Number) returns nothing
+    unsafe
+      win_sparkle_set_langid(pLangId)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Checks if an update is available, showing progress UI to the user.
+
+  Description:
+  Normally, WinSparkle checks for updates on startup and only shows its UI
+  when it finds an update. If the application disables this behavior, it
+  can hook this function to "Check for updates..." menu item.
+
+  When called, background thread is started to check for updates. A small
+  window is shown to let the user know the progress. If no update is found,
+  the user is told so. If there is an update, the usual "update available"
+  window is shown.
+
+  This function returns immediately.
+
+  Note: Because this function is intended for manual, user-initiated checks
+  for updates, it ignores "Skip this version" even if the user checked it previously.
+  */
+  public handler winSparkleCheckForUpdates() returns nothing
+    unsafe
+      win_sparkle_check_update_with_ui()
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Checks if an update is available, showing progress UI to the user and immediately installing the update if one is available.
+
+  Description:
+  This is useful for the case when users should almost always use the
+  newest version of your software. When called, WinSparkle will check for
+  updates showing a progress UI to the user. If an update is found the update
+  prompt will be skipped and the update will be installed immediately.
+
+  If your application expects to do something after checking for updates you
+  may wish to use win_sparkle_set_did_not_find_update_callback() and
+  win_sparkle_set_update_cancelled_callback().
+  */
+  public handler winSparkleCheckForUpdatesAndInstall() returns nothing
+    unsafe
+      win_sparkle_check_update_with_ui_and_install()
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Checks for updates, but does not display any UI unless an update is found.
+
+  Description:
+  No progress UI is shown to the user when checking. If an update is
+  available, the usual "update available" window is shown; this function
+  is *not* completely UI-less.
+
+  Use with caution, it usually makes more sense to use the automatic update
+  checks on interval option or manual check with visible UI.
+
+  This function returns immediately.
+
+  This function respects "Skip this version" choice by the user.
+  */
+  public handler winSparkleCheckForUpdatesInBackground() returns nothing
+    unsafe
+      win_sparkle_check_update_without_ui()
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Returns the time in seconds the last check for updates was performed.
+
+  Returns: Seconds or empty if no check has been performed.
+  */
+  public handler winSparkleLastUpdateCheckDate() returns optional Number
+    variable tTimeInSeconds as Number
+
+    unsafe
+      put win_sparkle_get_last_check_time() into tTimeInSeconds
+    end unsafe
+
+    if tTimeInSeconds is -1 then
+      return nothing
+    else
+      return tTimeInSeconds
+    end if
+  end handler
+
+
+  /**
+  Summary: Gets the automatic update checking state.
+
+  Description:
+  Defaults to `false` when not yet configured (as happens on first start).
+
+  */
+  public handler winSparkleAutomaticallyChecksForUpdates() returns Boolean
+    variable tBool as Boolean
+
+    unsafe
+      put win_sparkle_get_automatic_check_for_updates() into tBool
+    end unsafe
+
+    return tBool
+  end handler
+
+  /**
+  Summary: Sets whether updates are checked automatically or only through a manual call.
+
+  Description:
+  If disabled, sparkleCheckForUpdates() must be used explicitly.
+  */
+  public handler winSparkleSetAutomaticallyChecksForUpdates(in pBoolean as Boolean) returns nothing
+    unsafe
+      win_sparkle_set_automatic_check_for_updates(pBoolean)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Sets the feed url.
+
+  Description:
+  If this function isn't called by the app, the URL is obtained from Windows resource named "FeedURL" of type "APPCAST".
+  */
+  public handler winSparkleSetFeedUrl(in pUrl as String) returns nothing
+    unsafe
+      win_sparkle_set_appcast_url(pUrl)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Gets the automatic update interval in seconds.
+
+  Description:
+  Default value is one day.
+
+  */
+  public handler winSparkleUpdateCheckInterval() returns Number
+    variable tInterval as Number
+
+    unsafe
+      put win_sparkle_get_update_check_interval() into tInterval
+    end unsafe
+
+    return tInterval
+  end handler
+
+  /**
+  Summary: Sets the number of seconds between checks for updates.
+
+  Description:
+  The minimum update interval is 3600 seconds (1 hour).
+
+  */
+  public handler winSparkleSetUpdateCheckInterval(in pSeconds as Number) returns nothing
+    unsafe
+      win_sparkle_set_update_check_interval(pSeconds)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Sets the DSA public key.
+
+  Parameters:
+  pPublicKey: Public key in PEM format.
+
+  Description:
+  Public key will be used to verify DSA signature of the update file. PEM data will be set only if it contains valid DSA public key.
+
+  If this function isn't called by the app, public key is obtained from Windows resource named "DSAPub" of type "DSAPEM".
+
+  Returns: Boolean. True if a valid key was provided, false otherwise.
+  */
+  public handler winSparkleSetDSAPubPEM(in pPublicKey as String) returns Boolean
+    variable tResult as Boolean
+
+    unsafe
+      put win_sparkle_set_dsa_pub_pem(pPublicKey) into tResult
+    end unsafe
+
+    return tResult
+  end handler
+
+
+  /**
+  Summary: Sets application metadata.
+
+  Parameters:
+  pCompanyName:
+  pAppName:
+  pAppVersion:
+
+  Description:
+  Normally, these are taken from VERSIONINFO/StringFileInfo resources, but if your application
+  doesn't use them for some reason, using this function is an alternative.
+
+  Note: pCompanyName and pAppname are used to determine the location of WinSparkle settings in registry.
+  (HKCU\Software\<company_name>\<app_name>\WinSparkle is used.)
+  */
+  public handler winSparkleSetAppDetails(in pCompanyName as String, in pAppName as String, in pAppVersion as String) returns nothing
+    unsafe
+      win_sparkle_set_app_details(pCompanyName, pAppName, pAppVersion)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Sets application build version number.
+
+  Parameters:
+  pBuild:
+
+  Description:
+  This is the internal version number that is not normally shown to the user.
+  It can be used for finer granularity that official release versions, e.g. for interim builds.
+
+  If this function is called, then the provided *build* number is used for comparing
+  versions; it is compared to the "version" attribute in the appcast and corresponds
+  to OS X Sparkle's CFBundleVersion handling. If used, then the appcast must
+  also contain the "shortVersionString" attribute with human-readable display
+  version string. The version passed to sparkleSetAppDetails() corresponds to this and is used for display.
+  */
+  public handler winSparkleSetBuildVersion(in pBuild as String) returns nothing
+    unsafe
+      win_sparkle_set_app_build_version(pBuild)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Set the registry path where settings will be stored.
+
+  Parameters:
+  pPath:
+
+  Description:
+  Normally, these are stored in "HKCU\Software\<company_name>\<app_name>\WinSparkle"
+  but if your application needs to store the data elsewhere for some reason, using this function is an alternative.
+
+  Note that path is relative to HKCU/HKLM root and the root is not part
+  of it. For example:
+
+  ```
+  get sparkleSetRegistryPath("Software\My App\Updates");
+  ```
+  */
+  public handler winSparkleSetRegistryPath(in pPath as String) returns nothing
+    unsafe
+      win_sparkle_set_registry_path(pPath)
+    end unsafe
+  end handler
+
+
+  private handler listToArray(in pList as List) returns Array
+    variable tCount as Number
+    variable tArray as Array
+    variable tKey as String
+
+    repeat with tCount from 1 up to the number of elements in pList
+      put tCount formatted as string into tKey
+      put the empty array into tArray[tKey]
+      put element tCount of pList into tArray[tKey]
+    end repeat
+
+    return tArray
+  end handler
+
+  private handler SetupCallbacks() returns nothing
+    unsafe
+      win_sparkle_set_error_callback(DidAbortWithError)
+      win_sparkle_set_can_shutdown_callback(CanShutdownForUpdate)
+      win_sparkle_set_shutdown_request_callback(ShutdownRequest)
+      win_sparkle_set_did_find_update_callback(DidFindValidUpdate)
+      win_sparkle_set_did_not_find_update_callback(DidNotFindUpdate)
+      win_sparkle_set_update_cancelled_callback(UpdateCancelled)
+    end unsafe
+  end handler
+
+  handler DidFindValidUpdate() returns nothing
+    post "sparkleFoundUpdate"
+  end handler
+
+  handler DidNotFindUpdate() returns nothing
+    post "sparkleDidNotFindUpdate"
+  end handler
+
+  handler ShutdownRequest() returns nothing
+    post "sparkleShutdownApplication"
+  end handler
+
+  handler UpdateCancelled() returns nothing
+    post "sparkleDownloadCanceledByUser"
+  end handler
+
+  handler DidAbortWithError() returns nothing
+    post "sparkleDidAbortWithError"
+  end handler
+
+  handler CanShutdownForUpdate() returns Number
+    post "sparkleShouldPostponeRelaunchForUpdate"
+    return 1
+  end handler
+
+end library

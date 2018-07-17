@@ -4,11 +4,15 @@ Levure helper that provides auto updates for desktop applications on macOS and W
 
 ## macOS
 
-The macOS implementation uses an external wrapped around Sparkle. When packaging your application a zipped up version of your app will be created that you will upload to your server. Sparkle will download and install this file when an update is available.
+The macOS implementation uses an extension the wraps the [Sparkle](https://sparkle-project.org) framework. 
+
+## Windows
+
+The Windows implementation uses an extension that wraps the [WinSparkle](https://winsparkle.org) DLL.
 
 ### appcast.xml
 
-Sparkle uses the `appcast.xml` file to detect updates. You need to copy the file included with this helper into the folder where supporting build files are stored (e.g. `build files`) and customize it. Here are the default contents:
+Sparkle and WinSparkle both use an `appcast.xml` file to detect updates. You need to copy the file included with this helper into the folder where supporting build files are stored (e.g. `build files`) and customize it. Here are the default contents:
 
 ```
 <?xml version="1.0" encoding="utf-8"?>
@@ -20,11 +24,20 @@ Sparkle uses the `appcast.xml` file to detect updates. You need to copy the file
       <language>en</language>
          <item>
             <title>Version [[VERSION]]</title>
-                        <sparkle:releaseNotesLink>
-                            [[BUILD_AUTOUPDATE_URL]]/release-notes.html
-                        </sparkle:releaseNotesLink>
+            <sparkle:releaseNotesLink>
+              [[BUILD_AUTOUPDATE_URL]]/release-notes.html
+            </sparkle:releaseNotesLink>
             <pubDate>[[INTERNET_DATE]]</pubDate>
-            <enclosure url="[[BUILD_AUTOUPDATE_URL]]/APP-NAME.app.zip"
+            <enclosure
+               url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[MACOS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].dmg"
+               sparkle:version="[[BUILD]]"
+               sparkle:shortVersionString="[[VERSION]]"
+               length="0"
+               type="application/octet-stream" />
+            <enclosure
+               sparkle:os="windows"
+               sparkle:installerArguments="[[WIN_INSTALLER_ARGUMENTS]]"
+               url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[WINDOWS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].exe"
                sparkle:version="[[BUILD]]"
                sparkle:shortVersionString="[[VERSION]]"
                length="0"
@@ -32,46 +45,22 @@ Sparkle uses the `appcast.xml` file to detect updates. You need to copy the file
          </item>
    </channel>
 </rss>
+
 ```
 
 You need to change the `APP-NAME` string to be the name of your app executable. You may also change the name of the `release-notes.html` file. This is an HTML file that contains the release notes for this update.
-
-## Windows
-
-The Windows implementation uses an approach built in LiveCode. It is comprised of two stack files (*update_dialog.livecode* and *updater.livecode*) and an *update.txt* file. These files work together to download your full Windows installer when an update is available.
-
-These stacks and the update.txt file should be copied into your application's folder where supporting build files are stored (e.g. `build files`). 
-
-Each stack defines a `PackageMe` handler which will placed a compressed version of the stack alongside the stack file. Whenever you make any changes to either stack you should call `PackageMe` and upload the resulting compressed file to your server.
-
-### update.txt
-
-The `update.txt` file will be processed by this helper each time you build your Levure Application. It primarily contains variables that will be replaced based on the version of your app that is being built. There are some one-time changes you will need to make, however. Here are the default file contents:
-
-```
-[[VERSION]].[[BUILD]]
-[[ENGINE_VERSION]]
-[[ROOT_AUTOUPDATE_URL]]/updater.gz
-[[ROOT_AUTOUPDATE_URL]]/[[BUILD_PROFILE]]/[[VERSION]]-[[BUILD]]/release-notes-win.html
-
-https://www.YOUR-SERVER.com/download/APP-NAME/APP-VERSION/[[BUILD_PROFILE]]/INSTALLER-NAME[[VERSION]]-[[BUILD]].exe
-
-[[ROOT_AUTOUPDATE_URL]]/update_dialog.gz
-```
-
-Before you use `update.txt` for the first time you will need to configure lines 4 and 6. 
-
-Line 4 includes the name of your release notes file. This is a file that contains a description of your release notes in the `htmltext` LiveCode format. You are responsible for generating and uploading this file.
-
-Line 6 is the location where your Windows installer can be found. This helper will fill in the variables `[[..]]`. You need to configure your server name and path to the root folder where your installer lives.
 
 ## Levure Configuration
 
 There are a couple of configuration options that need to be added to your `app.yml` file. 
 
-In the `build profiles` > `all profiles` > `copy files` section add an `app updater` key that points to the `appcast.xml` and `update.txt` files for your app.
+In the `build profiles` > `all profiles` > `copy files` section add an `app updater` key that points to the `appcast.xml` and `update.txt` files for your app. You will also add a `build profiles` entry for `installer name` that tells the auto updater the name of the installers to download.
 
-An `app updater` key is also added at the root level and tells this helper where the root folder for auto updates is located.
+An `app updater` key is also added at the root level. Here you will specify the follwoing:
+
+1. The root url where the appcast.xml and releast-notes.html files will be located. 
+2. Command line arguments to pass to the Windows installer. The example shows the arguments you would pass to an installer created with Inno Setup.
+3. The registry path where WinSparkle settings will be stored. Do not include the root (e.g. `HKEY_LOCAL_MACHINE\`).
 
 ```
 build profiles:
@@ -79,47 +68,68 @@ build profiles:
     copy files:
       app updater:
         - filename: ../build files/appcast.xml
-        - filename: ../build files/update.txt
+    installer name:
+      all platforms: My App
+  beta:
+    installer name:
+      all platforms: My App Beta
 
 app updater:
   all profiles:
     root auto update url: https://www.MY-SERVER.com/download/MY-APP/MY-APP-VERSION/auto_update
+    windows installer arguments: /SILENT /SP-
+    windows registry path: Software\COMPANY_NAME\PRODUCT_NAME\WinSparkle
 ```
+
+Note that in addition to the `all platforms` key you can also use `macos` and `windows` keys.
 
 ## Updating Info.plist on macOS
 
-On macOS you will need to customize the Info.plist file and add the following key/value:
+On macOS you will need to customize the Info.plist file and add the following key/value pairs to the &lt;dict&gt; node:
 
 ```
 <key>SUFeedURL</key>
-<string>[[SPARKLE_URL]]</string>
+<string>[[SUFeedURL]]</string>
+<key>SUEnableAutomaticChecks</key>
+<true/>
 ```
 
-During the packaging process Levure will replace `[[SPARKLE_URL]]` with the appcast.xml url.
+During the packaging process Levure will replace `[[SUFeedURL]]` with the appcast.xml url.
+
+## Implementing within Levure
+
+You will need to add some calls to the app updater library in a couple of the messages that Levure dispatches.
+
+1. Within the `InitializeApplication` message call `appupdaterInitialize`.
+2. At the end of the `OpenApplication` message call `appupdaterRun`. This should be called after you have displayed your application window.
+3. In the `PreShutdownApplication` message call `appupdaterCleanup`.
+4. If you have a menu item that is used to check for updates then call `appupdaterCheckForUpdates` from when the menu item is selected.
+
+The auto update helper also adds the `PreUpdateApplication` message that is dispatched to your application right before the application is updated. On macOS you can return return `false` from `PreUpdateApplication` if you would like to cancel the update.
 
 ## Packaging your application
 
-When you package an application an `update` folder will be added to the output folder (sits alongside a `macos` or `windows` folder). The `update` folder will contain one folder and two files:
+When you package an application an `update` folder will be added to the output folder (sits alongside a `macos` or `windows` folder). The `update` folder will contain the appcast.xml file and a folder named after the app version number where your release notes can go.
 
 ```
-./update/1.0.0-10
 ./update/appcast.xml
-./update/update.txt
+./update/1.0.0-15
 ```
-
-The folder is named after the version of your app and contains the zipped version of your app for macOS. You should add your release note(s) HTML files to this folder as well.
 
 ## Uploading your updates
 
-After packaging your application you need to upload files to the correct location. Let's assume that the `root auto update url` defined in the `app.yml` file for your app is `http://www.my-server.com/download/my-app/1_0/auto_update`, that you packaged your application for the `release` build profile, and that you packaged version `1.0.0-10`.
+**Important!** Before you upload the `appcast.xml` file make sure you have uploaded your new installers.
 
-On your server the `auto_update` folder should have a `release` folder inside of it. This represents the build profile. You will upload the `./update/1.0.0-10` folder to this folder first.
+After packaging your application you need to upload files to the correct location. Let's assume that the `root auto update url` defined in the `app.yml` file for your app is `http://www.my-server.com/download/my-app/1_0/auto_update`, that you packaged your application for the `release` build profile, and that you packaged version `1.0.0-10` of your application.
 
-After the `1.0.0-10` folder has been uploaded you can upload  the `appcast.xml` and `update.txt` files to the `./update/release` folder. Your update will now be live. You should now have urls similar to the following:
+On your server the `auto_update` folder should have a `release` folder inside of it. This represents the build profile. Perform the following actions in the order listed:
+
+1. Upload your installers.
+2. Upload the `1.0.0-10` folder to the `./auto_update/release` folder.
+3. Upload your `release_notes.html` file to the `./auto_update/release/1.0.0-10` folder.
+4. Upload the `appcast.xml` file to the `./auto_update/release` folder.
+
+You should now have urls similar to the following:
 
 - http://www.my-server.com/download/my-app/1_0/auto_update/release/appcast.xml
-- http://www.my-server.com/download/my-app/1_0/auto_update/release/update.txt
-- http://www.my-server.com/download/my-app/1_0/auto_update/release/1.0.0-10/myapp.app.zip
 - http://www.my-server.com/download/my-app/1_0/auto_update/release/1.0.0-10/release-notes.html
-- http://www.my-server.com/download/my-app/1_0/auto_update/release/1.0.0-10/release-notes-win.html
-

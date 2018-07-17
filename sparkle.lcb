@@ -1,0 +1,847 @@
+library community.livecode.trevordevore.sparkle
+
+  /*
+  URLs of interest:
+
+  - https://sparkle-project.org/documentation/
+  - https://sparkle-project.org/documentation/customization/
+  */
+
+  use com.livecode.foreign
+  use com.livecode.objc
+  use com.livecode.engine
+
+  metadata title is "Sparkle"
+  metadata author is "TrevorDeVore"
+  metadata version is "0.5.0"
+
+  private foreign handler ObjC_SUUpdaterSharedUpdater() \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.+sharedUpdater"
+
+  private foreign handler ObjC_SUUpdaterSetDelegate (in pSUUpdater as ObjcId, in pDelegate as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setDelegate:"
+
+  private foreign handler ObjC_SUUpdaterCheckForUpdates (in pSUUpdater as ObjcId, in pSender as optional ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-checkForUpdates:"
+  private foreign handler ObjC_SUUpdaterCheckForUpdatesInBackground (in pSUUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-checkForUpdatesInBackground"
+  private foreign handler ObjC_SUUpdaterCheckForUpdateInformation (in pSUUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-checkForUpdateInformation"
+  private foreign handler ObjC_SUUpdaterResetUpdateCycle (in pSUUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-resetUpdateCycle"
+  -- NSDate *lastUpdateCheckDate;
+  private foreign handler ObjC_SUUpdaterLastUpdateCheckDate (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-lastUpdateCheckDate"
+
+  -- NSBundle
+  private foreign handler ObjC_SUUpdaterHostBundle (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-hostBundle"
+  private foreign handler ObjC_SUUpdaterSparkleBundle (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-sparkleBundle"
+
+  private foreign handler ObjC_SUUpdaterAutomaticallyChecksForUpdates (in pSUUpdater as ObjcId) \
+        returns CBool binds to "objc:Sparkle>SUUpdater.-automaticallyChecksForUpdates"
+  private foreign handler ObjC_SUUpdaterSetAutomaticallyChecksForUpdates (in pSUUpdater as ObjcId, in pBool as CBool) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setAutomaticallyChecksForUpdates:"
+
+  private foreign handler ObjC_SUUpdaterAutomaticallyDownloadsUpdates (in pSUUpdater as ObjcId) \
+        returns CBool binds to "objc:Sparkle>SUUpdater.-automaticallyDownloadsUpdates"
+  private foreign handler ObjC_SUUpdaterSetAutomaticallyDownloadsUpdates (in pSUUpdater as ObjcId, in pBool as CBool) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setAutomaticallyDownloadsUpdates:"
+
+  -- (NSURL *)feedURL
+  private foreign handler ObjC_SUUpdaterFeedURL (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-feedURL"
+  private foreign handler ObjC_SUUpdaterSetFeedURL (in pSUUpdater as ObjcId, in pUrl as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setFeedURL:"
+
+  -- (NSString *)userAgentString
+  private foreign handler ObjC_SUUpdaterUserAgentString (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-userAgentString"
+  private foreign handler ObjC_SUUpdaterSetUserAgentString (in pSUUpdater as ObjcId, in pUserAgent as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setUserAgentString:"
+
+  private foreign handler ObjC_SUUpdaterDecryptionPassword (in pSUUpdater as ObjcId) \
+        returns ObjcId binds to "objc:Sparkle>SUUpdater.-decryptionPassword"
+  private foreign handler ObjC_SUUpdaterSetDecryptionPassword (in pSUUpdater as ObjcId, in pPassword as ObjcId) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setDecryptionPassword:"
+
+  private foreign handler ObjC_SUUpdaterSendsSystemProfile (in pSUUpdater as ObjcId) \
+        returns CBool binds to "objc:Sparkle>SUUpdater.-sendsSystemProfile"
+  private foreign handler ObjC_SUUpdaterSetSendsSystemProfile (in pSUUpdater as ObjcId, in pBool as CBool) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setSendsSystemProfile:"
+
+  -- (NSURL *)parameterizedFeedURL
+  private foreign handler ObjC_SUUpdaterParameterizedFeedURL (in pSUUpdater as ObjcId) \
+        returns ObjcId \
+        binds to "objc:Sparkle>SUUpdater.-parameterizedFeedURL"
+
+  -- (NSTimeInterval)updateCheckInterval
+  private foreign handler ObjC_SUUpdaterUpdateCheckInterval (in pSUUpdater as ObjcId) \
+        returns CDouble binds to "objc:Sparkle>SUUpdater.-updateCheckInterval"
+  private foreign handler ObjC_SUUpdaterSetUpdateCheckInterval (in pSUUpdater as ObjcId, in pSeconds as CDouble) \
+        returns nothing binds to "objc:Sparkle>SUUpdater.-setUpdateCheckInterval:"
+
+  private foreign handler ObjC_SUUpdaterUpdateInProgress (in pSUUpdater as ObjcId) \
+        returns CBool binds to "objc:Sparkle>SUUpdater.-updateInProgress"
+
+  /* FOREIGN HANDLERS FOR DELEGATES */
+  foreign handler Delegate_SUUpdaterDidFinishLoadingAppcast (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppcast as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:didFinishLoadingAppcast:"
+  foreign handler Delegate_SUUpdaterDidFindValidUpdate (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppcastItem as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:didFindValidUpdate:"
+  foreign handler Delegate_SUUpdaterDidNotFindUpdate (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updaterDidNotFindUpdate:"
+  foreign handler Delegate_SUUpdaterWillInstallUpdate (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppcastItem as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:willInstallUpdate:"
+  foreign handler Delegate_SUUpdaterWillRelaunchApplication (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updaterWillRelaunchApplication:"
+  foreign handler Delegate_SUUpdaterDidRelaunchApplication (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updaterDidRelaunchApplication:"
+  foreign handler Delegate_SUUpdaterWillShowModalAlert (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updaterWillShowModalAlert:"
+  foreign handler Delegate_SUUpdaterDidShowModalAlert (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updaterDidShowModalAlert:"
+  foreign handler Delegate_SUUpdaterUserDidCancelDownload (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-userDidCancelDownload:"
+  foreign handler Delegate_SUUpdaterWillInstallUpdateOnQuit (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppcastItem as ObjcId, in pImmediateInvocation as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:willInstallUpdateOnQuit:immediateInstallationInvocation:"
+  foreign handler Delegate_SUUpdaterDidCancelInstallUpdateOnQuit (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppcastItem as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:didCancelInstallUpdateOnQuit:"
+  foreign handler Delegate_SUUpdaterDidAbortWithError (in pDelegate as ObjcId, in pUpdater as ObjcId, in pNSError as ObjcId) \
+        returns nothing binds to "objc:Sparkle>.-updater:didAbortWithError:"
+  foreign handler Delegate_SUUpdaterShouldPostponeRelaunchForUpdate (in pDelegate as ObjcId, in pUpdater as ObjcId, in pAppCastItem as ObjcId, in pNSInvocation as ObjcId) \
+        returns CBool binds to "objc:Sparkle>.-updater:shouldPostponeRelaunchForUpdate:untilInvoking:"
+  foreign handler Delegate_SUUpdaterUpdaterMayCheckForUpdates (in pDelegate as ObjcId, in pUpdater as ObjcId) \
+        returns CBool binds to "objc:Sparkle>.-updaterMayCheckForUpdates:"
+
+  /* ADDITIONAL HELPERS */
+  private foreign handler ObjC_NSURLAlloc() \
+        returns ObjcRetainedId binds to "objc:NSURL.+alloc"
+  private foreign handler ObjC_NSURLInitWithString(in pObj as ObjcRetainedId, in pUrl as ObjcId) \
+        returns optional ObjcRetainedId binds to "objc:NSURL.-initWithString:"
+  private foreign handler ObjC_NSURLAbsoluteString(in pNSURL as ObjcId) \
+        returns ObjcId binds to "objc:NSURL.-absoluteString"
+
+  private foreign handler ObjC_NSDateTimeIntervalSince1970(in pObj as ObjcId) \
+        returns CDouble binds to "objc:NSDate.-timeIntervalSince1970"
+
+  -- NSUrl
+  private foreign handler ObjC_NSBundleUrl(in pObj as ObjcId) \
+        returns ObjcId binds to "objc:NSBundle.-bundleURL"
+  -- NSString
+  private foreign handler ObjC_NSBundlePath(in pObj as ObjcId) \
+        returns ObjcId binds to "objc:NSBundle.-bundlePath"
+  private foreign handler ObjC_NSBundleIdentifier(in pObj as ObjcId) \
+        returns ObjcId binds to "objc:NSBundle.-bundleIdentifier"
+
+  private foreign handler ObjC_NSErrorLocalizedFailureReason(in pObj as ObjcId) \
+        returns ObjcId binds to "objc:NSError.-localizedFailureReason"
+  private foreign handler ObjC_NSErrorLocalizedDescription(in pObj as ObjcId) \
+        returns ObjcId binds to "objc:NSError.-localizedDescription"
+
+  private foreign handler ObjC_NSInvocationInvoke(in pObj as ObjcId) \
+        returns nothing binds to "objc:NSInvocation.-invoke"
+
+  /* VARIABLES */
+  variable mSharedUpdater as optional ObjcObject
+  variable mSUUpdaterDelegate as optional ObjcObject
+  variable mNSInvocation as optional ObjcObject
+  variable mMayCheckForUpdates as Boolean
+
+
+  /* PUBLIC HANDLERS */
+
+  /**
+  Summary: Call before calling any other handlers in the Sparkle extension.
+
+  Description:
+  This handler initializes an internal variable and sets up delegates so that the
+  extension can respond to messages that Sparkle sends.
+
+  Returns: nothing
+  */
+  public handler sparkleInitialize() returns nothing
+    if mSharedUpdater is nothing then
+      put true into mMayCheckForUpdates
+
+      unsafe
+        put ObjC_SUUpdaterSharedUpdater() into mSharedUpdater
+        SetSUUpdaterInformalDelegate(mSharedUpdater)
+      end unsafe
+    end if
+  end handler
+
+
+  /**
+  Summary: Checks for updates while displaying a UI.
+
+  Description:
+  This is meant to be called from a menu item as it will provide visual
+  feedback showing that a check is being performed.
+  */
+  public handler sparkleCheckForUpdates() returns nothing
+    unsafe
+      ObjC_SUUpdaterCheckForUpdates(mSharedUpdater, nothing)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Checks for updates, but does not display any UI unless an update is found.
+
+  Description:
+  This is meant for programmatically initating a check for updates. That is,
+  it will display no UI unless it actually finds an update, in which case it
+  proceeds as usual.
+
+  If automatic downloading of updates it turned on and allowed, however,
+  this will invoke that behavior, and if an update is found, it will be downloaded
+  in the background silently and will be prepped for installation.
+
+  This will not find updates that the user has opted into skipping.
+  */
+  public handler sparkleCheckForUpdatesInBackground() returns nothing
+    unsafe
+      ObjC_SUUpdaterCheckForUpdatesInBackground(mSharedUpdater)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Begins a "probing" check for updates which will not actually offer to update to that version.
+
+  Description:
+  However, the messages `sparkleFoundUpdate` and `sparkleDidNotFindUpdate` will be called,
+  so you can use that information in your UI.
+
+  Updates that have been skipped by the user will not be found.
+  */
+  public handler sparkleCheckForUpdateInformation() returns nothing
+    unsafe
+      ObjC_SUUpdaterCheckForUpdateInformation(mSharedUpdater)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Restarts your application after your app has received the `sparklePreRelaunchForUpdate` message.
+
+  Description:
+  When Sparkle is ready to update your application it will send the `sparklePreRelaunchForUpdate` message.
+  Your application should perform any necessary cleanup and then call this handler to quit and install
+  the update.
+  */
+  public handler sparkleRelaunch() returns nothing
+    if mNSInvocation is not nothing then
+      unsafe
+        ObjC_NSInvocationInvoke(mNSInvocation)
+      end unsafe
+      put nothing into mNSInvocation
+    end if
+  end handler
+
+
+  /**
+  Summary: Appropriately schedules or cancels the update checking timer according to the preferences for time interval and automatic checks.
+
+  Description:
+  This call does not change the date of the next check, but only the internal NSTimer.
+  */
+  public handler sparkleResetUpdateCycle() returns nothing
+    unsafe
+      ObjC_SUUpdaterResetUpdateCycle(mSharedUpdater)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Returns the time in seconds the last check for updates was performed.
+
+  Returns: Seconds or empty if no check has been performed.
+  */
+  public handler sparkleLastUpdateCheckDate() returns optional Number
+    variable tNSDate as optional ObjcObject
+    variable tSeconds as optional Number
+
+    unsafe
+      put ObjC_SUUpdaterLastUpdateCheckDate(mSharedUpdater) into tNSDate
+      if tNSDate is not nothing then
+        put ObjC_NSDateTimeIntervalSince1970(tNSDate) into tSeconds
+      end if
+    end unsafe
+
+    return tSeconds
+  end handler
+
+
+  /**
+  Summary:
+  */
+  public handler sparkleAutomaticallyChecksForUpdates() returns Boolean
+    unsafe
+      return ObjC_SUUpdaterAutomaticallyChecksForUpdates(mSharedUpdater)
+    end unsafe
+  end handler
+
+  /**
+  Summary:
+  */
+  public handler sparkleSetAutomaticallyChecksForUpdates(in pBoolean as Boolean) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetAutomaticallyChecksForUpdates(mSharedUpdater, pBoolean)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Returns whether to allow Sparkle to pop up.
+
+  Description:
+  This may be used to prevent Sparkle from interrupting a setup assistant.
+  */
+  public handler sparkleMayCheckForUpdates() returns Boolean
+    return mMayCheckForUpdates
+  end handler
+
+  /**
+  Summary:
+
+  */
+  public handler sparkleSetMayCheckForUpdates(in pBoolean as Boolean) returns nothing
+    put pBoolean into mMayCheckForUpdates
+  end handler
+
+
+  /**
+  Summary:
+  */
+  public handler sparkleAutomaticallyDownloadsUpdates() returns Boolean
+    unsafe
+      return ObjC_SUUpdaterAutomaticallyDownloadsUpdates(mSharedUpdater)
+    end unsafe
+  end handler
+
+  /**
+  Summary:
+
+  */
+  public handler sparkleSetAutomaticallyDownloadsUpdates(in pBoolean as Boolean) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetAutomaticallyDownloadsUpdates(mSharedUpdater, pBoolean)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary:
+  */
+  public handler sparkleSendsSystemProfile() returns Boolean
+    unsafe
+      return ObjC_SUUpdaterSendsSystemProfile(mSharedUpdater)
+    end unsafe
+  end handler
+
+  /**
+  Summary: Sets the value in the user defaults.
+
+  */
+  public handler sparkleSetSendsSystemProfile(in pBoolean as Boolean) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetSendsSystemProfile(mSharedUpdater, pBoolean)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary:
+  */
+  public handler sparkleUpdateInProgress() returns Boolean
+    unsafe
+      return ObjC_SUUpdaterUpdateInProgress(mSharedUpdater)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary:
+
+  Description:
+  You must specify the URL of the appcast as the `SUFeedURL` key in either the Info.plist or the user defaults.
+  */
+  public handler sparkleParameterizedFeedUrl() returns String
+    variable tNSUrl as optional ObjcObject
+    variable tFilename as optional ObjcObject
+
+    unsafe
+      put ObjC_SUUpdaterParameterizedFeedURL(mSharedUpdater) into tNSUrl
+      if tNSUrl is not nothing then
+        put ObjC_NSURLAbsoluteString(tNSUrl) into tFilename
+      end if
+    end unsafe
+
+    if tFilename is not nothing then
+      return StringFromNSString(tFilename)
+    else
+      return ""
+    end if
+  end handler
+
+
+  /**
+  Summary: Returns an array containing info about the Host bundle (your app).
+
+  Description:
+  Returns an array with `url`, `path`, and `identifier` keys.
+
+  Returns: Array
+  */
+  public handler sparkleHostBundle() returns Array
+    variable tNSBundle as optional ObjcObject
+    variable tBundle as Array
+
+    unsafe
+      put ObjC_SUUpdaterHostBundle(mSharedUpdater) into tNSBundle
+      if tNSBundle is not nothing then
+        put StringFromNSString(ObjC_NSURLAbsoluteString(ObjC_NSBundleUrl(tNSBundle))) into tBundle["url"]
+        put StringFromNSString(ObjC_NSBundlePath(tNSBundle)) into tBundle["path"]
+        put StringFromNSString(ObjC_NSBundleIdentifier(tNSBundle)) into tBundle["identifier"]
+      end if
+    end unsafe
+
+    return tBundle
+  end handler
+
+
+  /**
+  Summary: Returns an arrya containing info about the Sparkle bundle.
+
+  Description:
+  Returns an array with `url`, `path`, and `identifier` keys.
+
+  Returns: Array
+  */
+  public handler sparkleSparkleBundle() returns Array
+    variable tNSBundle as optional ObjcObject
+    variable tBundle as Array
+
+    unsafe
+      put ObjC_SUUpdaterSparkleBundle(mSharedUpdater) into tNSBundle
+      if tNSBundle is not nothing then
+        put StringFromNSString(ObjC_NSURLAbsoluteString(ObjC_NSBundleUrl(tNSBundle))) into tBundle["url"]
+        put StringFromNSString(ObjC_NSBundlePath(tNSBundle)) into tBundle["path"]
+        put StringFromNSString(ObjC_NSBundleIdentifier(tNSBundle)) into tBundle["identifier"]
+      end if
+    end unsafe
+
+    return tBundle
+  end handler
+
+
+  /**
+  Summary:
+
+  Description:
+  You must specify the URL of the appcast as the `SUFeedURL` key in either the Info.plist or the user defaults.
+  */
+  public handler sparkleFeedUrl() returns String
+    variable tNSUrl as optional ObjcObject
+    variable tFilename as optional ObjcObject
+
+    unsafe
+      put ObjC_SUUpdaterFeedURL(mSharedUpdater) into tNSUrl
+      if tNSUrl is not nothing then
+        put ObjC_NSURLAbsoluteString(tNSUrl) into tFilename
+      end if
+    end unsafe
+
+    if tFilename is not nothing then
+      return StringFromNSString(tFilename)
+    else
+      return ""
+    end if
+  end handler
+
+  /**
+  Summary: Sets the feed url.
+
+  Description:
+  The feed url is usually stored in the Info.plist file.
+  This handler can be used to set the value in the user defaults. The value you set
+  it to will persist across app sessions.
+  */
+  public handler sparkleSetFeedUrl(in pUrl as String) returns nothing
+    variable tNSUrl as optional ObjcObject
+
+    unsafe
+      put ObjC_NSURLAlloc() into tNSUrl
+      put ObjC_NSURLInitWithString(tNSUrl, StringToNSString(pUrl)) into tNSUrl
+      if tNSUrl is not nothing then
+        ObjC_SUUpdaterSetFeedURL(mSharedUpdater, tNSUrl)
+      end if
+    end unsafe
+  end handler
+
+
+  /**
+  Summary:
+
+  */
+  public handler sparkleUpdateCheckInterval() returns Number
+    unsafe
+      return ObjC_SUUpdaterUpdateCheckInterval(mSharedUpdater)
+    end unsafe
+  end handler
+
+  /**
+  Summary: Sets the number of seconds between checks for updates.
+
+  Description:
+  This handler updates the user defaults (preferences) and the value will persist across sessions
+  of the app.
+
+  */
+  public handler sparkleSetUpdateCheckInterval(in pSeconds as Number) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetUpdateCheckInterval(mSharedUpdater, pSeconds)
+    end unsafe
+  end handler
+
+
+  /**
+  Summary:
+
+  */
+  public handler sparkleUserAgentString() returns String
+    variable tNSString as optional ObjcObject
+
+    unsafe
+      put ObjC_SUUpdaterUserAgentString(mSharedUpdater) into tNSString
+    end unsafe
+
+    if tNSString is not nothing then
+      return StringFromNSString(tNSString)
+    else
+      return ""
+    end if
+  end handler
+
+  /**
+  Summary: Sets the user agent string
+
+  Description:
+  This handler sets the user agent string that Sparkle sends to the server when it checks
+  for updates. The value will persist for the current session of the application.
+
+  */
+  public handler sparkleSetUserAgentString(in pUserAgent as String) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetUserAgentString(mSharedUpdater, StringToNSString(pUserAgent))
+    end unsafe
+  end handler
+
+
+  /**
+  Summary: Retruns the decryption password used for extracting updates shipped as Apple Disk Images (dmg).
+
+  */
+  public handler sparkleDecryptionPassword() returns String
+    variable tNSString as optional ObjcObject
+
+    unsafe
+      put ObjC_SUUpdaterDecryptionPassword(mSharedUpdater) into tNSString
+    end unsafe
+
+    if tNSString is not nothing then
+      return StringFromNSString(tNSString)
+    else
+      return ""
+    end if
+  end handler
+
+  /**
+  Summary: Sets the decryption password used for extracting updates shipped as Apple Disk Images (dmg).
+
+  Description:
+  */
+  public handler sparkleSetDecryptionPassword(in pPassword as String) returns nothing
+    unsafe
+      ObjC_SUUpdaterSetDecryptionPassword(mSharedUpdater, StringToNSString(pPassword))
+    end unsafe
+  end handler
+
+  /* SUAppcast and SUAppcastItem */
+  private foreign handler ObjC_AppCastItems (in pAppCast as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcast.-items"
+
+  private foreign handler ObjC_AppCastItemTitle (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-title"
+  private foreign handler ObjC_AppCastItemDateString (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-dateString"
+  private foreign handler ObjC_AppCastItemDescription (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-itemDescription"
+  private foreign handler ObjC_AppCastItemDSASignature (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-DSASignature"
+  private foreign handler ObjC_AppCastItemMinimumSystemVersion (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-minimumSystemVersion"
+  private foreign handler ObjC_AppCastItemMaximumSystemVersion (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-maximumSystemVersion"
+  private foreign handler ObjC_AppCastItemVersionString (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-versionString"
+  private foreign handler ObjC_AppCastItemOSString (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-osString"
+  private foreign handler ObjC_AppCastItemDisplayVersionString (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-displayVersionString"
+  private foreign handler ObjC_AppCastItemReleaseNotesURL (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-releaseNotesURL"
+  private foreign handler ObjC_AppCastItemFileURL (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-fileURL"
+  private foreign handler ObjC_AppCastItemInfoURL (in pAppCastItem as ObjcId) returns ObjcId \
+        binds to "objc:SUAppcastItem.-infoURL"
+  private foreign handler ObjC_AppCastItemContentLength (in pAppCastItem as ObjcId) returns CUInt \
+        binds to "objc:SUAppcastItem.-contentLength"
+
+
+  private handler AppCastItemsToArray(in pAppCast as ObjcObject) returns Array
+    variable tItemsObj as optional ObjcObject
+    variable tItems as List
+    variable tItem as ObjcObject
+    variable tArray as Array
+    variable tAppCastItems as List
+
+    unsafe
+      put ObjC_AppCastItems(pAppCast) into tItemsObj
+      if tItemsObj is not nothing then
+        put ListFromNSArray(tItemsObj) into tItems
+      end if
+    end unsafe
+
+    repeat for each element tItem in tItems
+      push AppCastItemToArray(tItem) onto tAppCastItems
+    end repeat
+
+    return listToArray(tAppCastItems)
+  end handler
+
+
+  private handler AppCastItemToArray(in pAppCastItem as ObjcObject) returns Array
+    variable tItem as Array
+
+    unsafe
+      put _Str(ObjC_AppCastItemTitle(pAppCastItem)) into tItem["title"]
+      put _Str(ObjC_AppCastItemDateString(pAppCastItem)) into tItem["date"]
+      put _Str(ObjC_AppCastItemDescription(pAppCastItem)) into tItem["description"]
+      put _URLStr(ObjC_AppCastItemReleaseNotesURL(pAppCastItem)) into tItem["release notes url"]
+      put _Str(ObjC_AppCastItemDSASignature(pAppCastItem)) into tItem["dsa signature"]
+      put _Str(ObjC_AppCastItemMinimumSystemVersion(pAppCastItem)) into tItem["minimum system version"]
+      put _Str(ObjC_AppCastItemMaximumSystemVersion(pAppCastItem)) into tItem["maximum system version"]
+      put _URLStr(ObjC_AppCastItemFileURL(pAppCastItem)) into tItem["file url"]
+      put _Str(ObjC_AppCastItemVersionString(pAppCastItem)) into tItem["version"]
+      put _Str(ObjC_AppCastItemOSString(pAppCastItem)) into tItem["os"]
+      put _Str(ObjC_AppCastItemDisplayVersionString(pAppCastItem)) into tItem["display version"]
+      put _URLStr(ObjC_AppCastItemInfoURL(pAppCastItem)) into tItem["info url"]
+      put ObjC_AppCastItemContentLength(pAppCastItem) into tItem["content length"]
+    end unsafe
+
+    return tItem
+  end handler
+
+
+  private handler _Str(in pNSString as optional ObjcObject) returns String
+    if pNSString is not nothing then
+      return StringFromNSString(pNSString)
+    else
+      return ""
+    end if
+  end handler
+
+
+  private handler _URLStr(in pNSURL as optional ObjcObject) returns String
+    if pNSURL is not nothing then
+      variable tString as ObjcObject
+
+      unsafe
+        put ObjC_NSURLAbsoluteString(pNSURL) into tString
+      end unsafe
+
+      return StringFromNSString(tString)
+    else
+      return ""
+    end if
+  end handler
+
+
+  private handler listToArray(in pList as List) returns Array
+    variable tCount as Number
+    variable tArray as Array
+    variable tKey as String
+
+    repeat with tCount from 1 up to the number of elements in pList
+      put tCount formatted as string into tKey
+      put the empty array into tArray[tKey]
+      put element tCount of pList into tArray[tKey]
+    end repeat
+
+    return tArray
+  end handler
+
+
+  /* DELEGATES */
+  unsafe handler SetSUUpdaterInformalDelegate(in pSUUpdater as ObjcObject) returns nothing
+    variable tDelegate as optional ObjcObject
+    variable tForeignHandlers as List
+    variable tMapping as Array
+
+    put [Delegate_SUUpdaterDidFinishLoadingAppcast, \
+          Delegate_SUUpdaterDidFindValidUpdate, \
+          Delegate_SUUpdaterDidNotFindUpdate, \
+          Delegate_SUUpdaterWillInstallUpdate, \
+          Delegate_SUUpdaterWillRelaunchApplication, \
+          Delegate_SUUpdaterDidRelaunchApplication, \
+          Delegate_SUUpdaterWillShowModalAlert, \
+          Delegate_SUUpdaterDidShowModalAlert, \
+          Delegate_SUUpdaterUserDidCancelDownload, \
+          Delegate_SUUpdaterWillInstallUpdateOnQuit, \
+          Delegate_SUUpdaterDidCancelInstallUpdateOnQuit, \
+          Delegate_SUUpdaterDidAbortWithError, \
+          Delegate_SUUpdaterShouldPostponeRelaunchForUpdate, \
+          Delegate_SUUpdaterUpdaterMayCheckForUpdates] into tForeignHandlers
+
+    put {"updater:didFinishLoadingAppcast:": DidFinishLoadingAppcast, \
+          "updater:didFindValidUpdate:": DidFindValidUpdate, \
+          "updaterDidNotFindUpdate:": DidNotFindUpdate, \
+          "updater:willInstallUpdate:": WillInstallUpdate, \
+          "updaterWillRelaunchApplication:": WillRelaunchApplication, \
+          "updaterDidRelaunchApplication:": DidRelaunchApplication, \
+          "updaterWillShowModalAlert:": WillShowModalAlert, \
+          "updaterDidShowModalAlert:": DidShowModalAlert, \
+          "userDidCancelDownload:": UserDidCancelDownload, \
+          "updater:willInstallUpdateOnQuit:immediateInstallationInvocation:": WillInstallUpdateOnQuit, \
+          "updater:didCancelInstallUpdateOnQuit:": DidCancelInstallUpdateOnQuit, \
+          "updater:didAbortWithError:": DidAbortWithError, \
+          "updater:shouldPostponeRelaunchForUpdate:untilInvoking:": ShouldPostponeRelaunchForUpdate, \
+          "updaterMayCheckForUpdates:": UpdaterMayCheckForUpdates} into tMapping
+
+    put CreateObjcInformalDelegate( \
+              tForeignHandlers, \
+              tMapping) into tDelegate
+
+    if tDelegate is not nothing then
+      put tDelegate into mSUUpdaterDelegate
+      ObjC_SUUpdaterSetDelegate(pSUUpdater, mSUUpdaterDelegate)
+    end if
+  end handler
+
+  private handler DidFinishLoadingAppcast(in pUpdater as ObjcObject, in pAppcast as ObjcObject) returns nothing
+    variable tAppCastItems as Array
+
+    put AppCastItemsToArray(pAppcast) into tAppCastItems
+    post "sparkleFinishedLoadingAppcast" with [tAppCastItems]
+  end handler
+
+  private handler DidFindValidUpdate(in pUpdater as ObjcObject, in pAppcastItem as ObjcObject) returns nothing
+    variable tItem as Array
+
+    put AppCastItemToArray(pAppCastItem) into tItem
+    post "sparkleFoundUpdate" with [tItem]
+  end handler
+
+  private handler DidNotFindUpdate(in pUpdater as ObjcObject) returns nothing
+    post "sparkleDidNotFindUpdate"
+  end handler
+
+  private handler WillInstallUpdate(in pUpdater as ObjcObject, in pAppcastItem as ObjcObject) returns nothing
+    variable tItem as Array
+
+    put AppCastItemToArray(pAppCastItem) into tItem
+    post "sparkleWillInstallUpdate" with [tItem]
+  end handler
+
+  private handler WillRelaunchApplication(in pUpdater as ObjcObject) returns nothing
+    post "sparkleWillRelaunchApplication"
+  end handler
+
+  // SUUpdater delegate must be set before applicationDidFinishLaunching: to catch this event.
+  // I don't believe this will ever be sent.
+  private handler DidRelaunchApplication(in pUpdater as ObjcObject) returns nothing
+    post "sparkleDidRelaunchApplication"
+  end handler
+
+  private handler WillShowModalAlert(in pUpdater as ObjcObject) returns nothing
+    post "sparkleWillShowModalAlert"
+  end handler
+
+  private handler DidShowModalAlert(in pUpdater as ObjcObject) returns nothing
+    post "sparkleDidShowModalAlert"
+  end handler
+
+  private handler UserDidCancelDownload(in pUpdater as ObjcObject) returns nothing
+    post "sparkleDownloadCanceledByUser"
+  end handler
+
+  // - (void)updater:(SUUpdater *)updater willInstallUpdateOnQuit:(SUAppcastItem *)item immediateInstallationInvocation:(NSInvocation *)invocation;
+  private handler WillInstallUpdateOnQuit(in pUpdater as ObjcObject, in pAppcastItem as ObjcObject, in pNSInvocation as ObjcObject) returns nothing
+    variable tItem as Array
+
+    put AppCastItemToArray(pAppCastItem) into tItem
+    post "sparkleWillInstallUpdateOnQuit" with [tItem]
+  end handler
+
+  // - (void)updater:(SUUpdater *)updater didCancelInstallUpdateOnQuit:(SUAppcastItem *)item;
+  private handler DidCancelInstallUpdateOnQuit(in pUpdater as ObjcObject, in pAppcastItem as ObjcObject) returns nothing
+    variable tItem as Array
+
+    put AppCastItemToArray(pAppCastItem) into tItem
+    post "sparkelDidCancelInstallUpdateOnQuit" with [tItem]
+  end handler
+
+  // - (void)updater:(SUUpdater *)updater didAbortWithError:(NSError *)error;
+  private handler DidAbortWithError(in pUpdater as ObjcObject, in pNSError as ObjcObject) returns nothing
+    variable tFailureReason as optional ObjcObject
+    variable tDescription as optional ObjcObject
+    variable tError as Array
+
+    unsafe
+      put ObjC_NSErrorLocalizedFailureReason(pNSError) into tFailureReason
+      put ObjC_NSErrorLocalizedDescription(pNSError) into tDescription
+    end unsafe
+
+    if tDescription is not nothing then
+      put StringFromNSString(tDescription) into tError["description"]
+    end if
+    if tFailureReason is not nothing then
+      put StringFromNSString(tFailureReason) into tError["failure reason"]
+    end if
+
+    post "sparkleDidAbortWithError" with [tError]
+  end handler
+
+  /**
+  Summary: Notifies developer that relaunch should occur.
+
+  Description:
+  This handler stores the NSInvocation and notifies the developer that Sparkle wants to relaunch by
+  dispatching `sparklePreRelaunchForUpdate`. The developer can then call `sparkleRelaunch` when
+  the app should actually relaunch.
+  */
+  private handler ShouldPostponeRelaunchForUpdate(in pUpdater as ObjcObject, in pAppCastItem as ObjcObject, in pNSInvocation as ObjcObject) returns Boolean
+    if mNSInvocation is not nothing then
+      put nothing into mNSInvocation
+    end if
+
+    put pNSInvocation into mNSInvocation
+    post "sparklePreRelaunchForUpdate"
+    return true
+  end handler
+
+
+  /**
+  Summary: Returns whether to allow Sparkle to pop up.
+
+  Description:
+  For example, this may be used to prevent Sparkle from interrupting a setup assistant.
+  */
+  private handler UpdaterMayCheckForUpdates(in pUpdater as ObjcObject) returns Boolean
+    return mMayCheckForUpdates
+  end handler
+end library

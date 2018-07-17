@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"  xmlns:dc="http://purl.org/dc/elements/1.1/">
+   <channel>
+      <title>APP-NAME Changelog</title>
+      <link>[[BUILDPROFILE_AUTOUPDATE_URL]]/appcast.xml</link>
+      <description>Most recent changes.</description>
+      <language>en</language>
+         <item>
+            <title>Version [[VERSION]]</title>
+            <sparkle:releaseNotesLink>
+              [[BUILD_AUTOUPDATE_URL]]/release-notes.html
+            </sparkle:releaseNotesLink>
+            <pubDate>[[INTERNET_DATE]]</pubDate>
+            <enclosure
+               url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[MACOS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].dmg"
+               sparkle:version="[[BUILD]]"
+               sparkle:shortVersionString="[[VERSION]]"
+               length="0"
+               type="application/octet-stream" />
+            <enclosure
+               sparkle:os="windows"
+               sparkle:installerArguments="[[WIN_INSTALLER_ARGUMENTS]]"
+               url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[WINDOWS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].exe"
+               sparkle:version="[[BUILD]]"
+               sparkle:shortVersionString="[[VERSION]]"
+               length="0"
+               type="application/octet-stream" />
+         </item>
+   </channel>
+</rss>

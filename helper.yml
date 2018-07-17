@@ -1,10 +1,12 @@
 libraries:
   - filename: app_updater.livecodescript
-externals:
-  macos:
-    - filename: mergSparkle.bundle
-      name: mergSparkle
-  windows:
+extensions:
+  - filename: sparkle.lcm
+    source: sparkle.lcb
+    platform: macos
+  - filename: winsparkle.lcm
+    source: winsparkle.lcb
+    platform: windows
 register components:
   - key: app updater
     kind: copy files

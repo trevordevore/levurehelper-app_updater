@@ -1,8 +1,0 @@
-[[VERSION]].[[BUILD]]
-[[ENGINE_VERSION]]
-[[ROOT_AUTOUPDATE_URL]]/updater.gz
-[[ROOT_AUTOUPDATE_URL]]/[[BUILD_PROFILE]]/[[VERSION]]-[[BUILD]]/release-notes-win.html
-
-https://www.YOUR-SERVER.com/download/APP-NAME/APP-VERSION/[[BUILD_PROFILE]]/INSTALLER-NAME[[VERSION]]-[[BUILD]].exe
-
-[[ROOT_AUTOUPDATE_URL]]/update_dialog.gz
