@@ -54,9 +54,14 @@ You need to change the `APP-NAME` string to be the name of your app executable. 
 
 There are a couple of configuration options that need to be added to your `app.yml` file. 
 
-In the `build profiles` > `all profiles` > `copy files` section add an `app updater` key that points to the `appcast.xml` and `update.txt` files for your app. You will also add a `build profiles` entry for `installer name` that tells the auto updater the name of the installers to download.
+In the `build profiles` > `all profiles` > `copy files` section add the following:
 
-An `app updater` key is also added at the root level. Here you will specify the follwoing:
+1. An `app updater` key that points to the `appcast.xml` file for your app. 
+2. `macos` and `windows` sections that move the `Sparkle.framework` and `WinSparkle.dll` files to their proper locations when packaging a standalone application.
+
+You will also add a `build profiles` entry for `installer name` that tells the auto updater the name of the installers to download.
+
+Lastly, an `app updater` key is also added at the root level. Here you will specify the following:
 
 1. The root url where the appcast.xml and releast-notes.html files will be located. 
 2. Command line arguments to pass to the Windows installer. The example shows the arguments you would pass to an installer created with Inno Setup.
@@ -68,6 +73,12 @@ build profiles:
     copy files:
       app updater:
         - filename: ../build files/appcast.xml
+      macos: 
+        - filename: ./helpers/app_updater/code/x86_64-mac/Sparkle.framework
+          destination: ./Externals
+      windows:
+        - filename: ./helpers/app_updater/code/x86-win32/WinSparkle.dll
+          destination: ./Externals
     installer name:
       all platforms: My App
   beta:
