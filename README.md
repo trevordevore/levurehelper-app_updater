@@ -2,6 +2,10 @@
 
 Levure helper that provides auto updates for desktop applications on macOS and Windows. To use this helper in your Levure application add it to the list of `helpers` in the `app.yml` file.
 
+LiveCode Requirements: >= 9.0.1 
+Sparkle version: 1.20
+WinSparkle version: 0.6.0
+
 ## macOS
 
 The macOS implementation uses an extension the wraps the [Sparkle](https://sparkle-project.org) framework. 
@@ -126,6 +130,18 @@ When you package an application an `update` folder will be added to the output f
 ./update/appcast.xml
 ./update/1.0.0-15
 ```
+
+### IMPORTANT
+
+There is a bug in the LiveCode 9.0.1 (and previous versions as well) standalone builder that creates a broken copy of the Sparkle.framework bundle. The bug report can be found here:
+
+https://quality.livecode.com/show_bug.cgi?id=19550
+
+Until it is fixed there is a plugin available which installs the necessary script changes for the current IDE session. Download the following LiveCode plugin and place it in your User Extensions `plugins` folder:
+
+http://www.bluemangolearning.com/download/revolution/plugins/InstallRevSaveAsStandaloneScriptUpdate.zip
+
+Before packaging your Levure application select the `InstallRevSaveAsStandaloneUpdate` stack from the `Development` > `Plugins` menu in the LiveCode IDE. You won't see any visible changes but you can then call the `levurePackageApplication` command and the updated scripts will be used.
 
 ## Uploading your updates
 
