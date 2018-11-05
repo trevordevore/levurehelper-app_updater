@@ -99,26 +99,24 @@ private command _autoUpdateVariables pBuildProfile, @rURLsA
   put empty into rURLsA["macos"]
   put empty into rURLsA["windows installer"]
 
-  if levureAppHasProperty("app updater") then
-    put levureAppGet("app updater") into tSettingsA
+  put levureAppGet("app updater", true) into tSettingsA
 
-    put tolower(pBuildProfile) into pBuildProfile
+  put tolower(pBuildProfile) into pBuildProfile
 
-    put tSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
-    if rURLsA["root"] is empty then
-      put tSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
-    end if
-    if rURLsA["root"] is not empty then
-      set the itemdelimiter to "/"
+  put tSettingsA[pBuildProfile]["root auto update url"] into rURLsA["root"]
+  if rURLsA["root"] is empty then
+    put tSettingsA["all profiles"]["root auto update url"] into rURLsA["root"]
+  end if
+  if rURLsA["root"] is not empty then
+    set the itemdelimiter to "/"
 
-      put rURLsA["root"] & "/" & rawURLEncode(pBuildProfile) into rURLsA["build profile"]
-      put rURLsA["build profile"] & "/" & _versionStringForFilenames() into rURLsA["version"]
-    end if
+    put rURLsA["root"] & "/" & rawURLEncode(pBuildProfile) into rURLsA["build profile"]
+    put rURLsA["build profile"] & "/" & _versionStringForFilenames() into rURLsA["version"]
+  end if
 
-    put tSettingsA[pBuildProfile]["windows installer arguments"] into rURLsA["windows installer arguments"]
-    if rURLsA["windows installer arguments"] is empty then
-      put tSettingsA["all profiles"]["windows installer arguments"] into rURLsA["windows installer arguments"]
-    end if
+  put tSettingsA[pBuildProfile]["windows installer arguments"] into rURLsA["windows installer arguments"]
+  if rURLsA["windows installer arguments"] is empty then
+    put tSettingsA["all profiles"]["windows installer arguments"] into rURLsA["windows installer arguments"]
   end if
 
   local tProfilesA, tDefaultName
