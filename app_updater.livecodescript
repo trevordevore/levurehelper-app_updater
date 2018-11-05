@@ -176,6 +176,8 @@ overrides the user settings.
 Returns: Boolean
 */
 function appupdaterAutomaticallyCheckForUpdates
+  if _killUpdater() then return false
+
   if the platform is "macos" then
     return sparkleAutomaticallyChecksForUpdates()
   else if the platform is "win32" then
@@ -199,6 +201,8 @@ On Windows this will set the value for the HKEY_CURRENT_USER root.
 Returns: nothing
 */
 command appupdaterSetAutomaticallyCheckForUpdates pBoolean
+   if _killUpdater() then return empty
+
   if the platform is "macos" then
     get sparkleSetAutomaticallyChecksForUpdates(pBoolean is true)
   else if the platform is "win32" then
