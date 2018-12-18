@@ -2,7 +2,7 @@
 
 Levure helper that provides auto updates for desktop applications on macOS and Windows.
 
-LiveCode Requirements: >= 9.0.1 
+LiveCode Requirements: >= 9.0.2
 Sparkle version: 1.20
 WinSparkle version: 0.6.0
 
@@ -124,6 +124,10 @@ You will need to add some calls to the app updater library in a couple of the me
 
 The auto update helper also adds the `PreUpdateApplication` message that is dispatched to your application right before the application is updated. On macOS you can return return `false` from `PreUpdateApplication` if you would like to cancel the update.
 
+## Always increment `build`
+
+When using this helper you must always increment `build` in the `app.yml` file. That is the value that is used to determine if a new update is available. Refer to the [Levure documentation on Version information](https://github.com/trevordevore/levure/wiki/packager#version-information) for more info.
+
 ## Packaging your application
 
 When you package an application an `update` folder will be added to the output folder (sits alongside a `macos` or `windows` folder). The `update` folder will contain the appcast.xml file and a folder named after the app version number where your release notes can go.
@@ -132,18 +136,6 @@ When you package an application an `update` folder will be added to the output f
 ./update/appcast.xml
 ./update/1.0.0-15
 ```
-
-### IMPORTANT
-
-There is a bug in the LiveCode 9.0.1 (and previous versions as well) standalone builder that creates a broken copy of the Sparkle.framework bundle. The bug report can be found here:
-
-https://quality.livecode.com/show_bug.cgi?id=19550
-
-Until it is fixed there is a plugin available which installs the necessary script changes for the current IDE session. Download the following LiveCode plugin and place it in your User Extensions `plugins` folder:
-
-http://www.bluemangolearning.com/download/revolution/plugins/InstallRevSaveAsStandaloneScriptUpdate.zip
-
-Before packaging your Levure application select the `InstallRevSaveAsStandaloneUpdate` stack from the `Development` > `Plugins` menu in the LiveCode IDE. You won't see any visible changes but you can then call the `levurePackageApplication` command and the updated scripts will be used.
 
 ## Uploading your updates
 
