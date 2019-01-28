@@ -13,7 +13,7 @@ library community.livecode.trevordevore.sparkle
 
   metadata title is "Sparkle"
   metadata author is "TrevorDeVore"
-  metadata version is "0.5.0"
+  metadata version is "0.5.1"
 
   private foreign handler ObjC_SUUpdaterSharedUpdater() \
         returns ObjcId binds to "objc:Sparkle>SUUpdater.+sharedUpdater"
@@ -580,8 +580,6 @@ library community.livecode.trevordevore.sparkle
         binds to "objc:SUAppcastItem.-dateString"
   private foreign handler ObjC_AppCastItemDescription (in pAppCastItem as ObjcId) returns ObjcId \
         binds to "objc:SUAppcastItem.-itemDescription"
-  private foreign handler ObjC_AppCastItemDSASignature (in pAppCastItem as ObjcId) returns ObjcId \
-        binds to "objc:SUAppcastItem.-DSASignature"
   private foreign handler ObjC_AppCastItemMinimumSystemVersion (in pAppCastItem as ObjcId) returns ObjcId \
         binds to "objc:SUAppcastItem.-minimumSystemVersion"
   private foreign handler ObjC_AppCastItemMaximumSystemVersion (in pAppCastItem as ObjcId) returns ObjcId \
@@ -632,7 +630,6 @@ library community.livecode.trevordevore.sparkle
       put _Str(ObjC_AppCastItemDateString(pAppCastItem)) into tItem["date"]
       put _Str(ObjC_AppCastItemDescription(pAppCastItem)) into tItem["description"]
       put _URLStr(ObjC_AppCastItemReleaseNotesURL(pAppCastItem)) into tItem["release notes url"]
-      put _Str(ObjC_AppCastItemDSASignature(pAppCastItem)) into tItem["dsa signature"]
       put _Str(ObjC_AppCastItemMinimumSystemVersion(pAppCastItem)) into tItem["minimum system version"]
       put _Str(ObjC_AppCastItemMaximumSystemVersion(pAppCastItem)) into tItem["maximum system version"]
       put _URLStr(ObjC_AppCastItemFileURL(pAppCastItem)) into tItem["file url"]
