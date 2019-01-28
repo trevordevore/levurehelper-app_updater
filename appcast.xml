@@ -21,7 +21,7 @@
                sparkle:os="windows"
                sparkle:installerArguments="[[WIN_INSTALLER_ARGUMENTS]]"
                url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[WINDOWS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].exe"
-               sparkle:version="[[BUILD]]"
+               sparkle:version="[[VERSION]].[[BUILD]]"
                sparkle:shortVersionString="[[VERSION]]"
                length="0"
                type="application/octet-stream" />

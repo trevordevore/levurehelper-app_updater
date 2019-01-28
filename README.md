@@ -44,7 +44,7 @@ Sparkle and WinSparkle both use an `appcast.xml` file to detect updates. You nee
                sparkle:os="windows"
                sparkle:installerArguments="[[WIN_INSTALLER_ARGUMENTS]]"
                url="https://www.your-company.com/download/your-app/1_0/[[BUILD_PROFILE]]/[[WINDOWS_INSTALLER_NAME]]%20[[VERSION]]-[[BUILD]].exe"
-               sparkle:version="[[BUILD]]"
+               sparkle:version="[[VERSION]].[[BUILD]]"
                sparkle:shortVersionString="[[VERSION]]"
                length="0"
                type="application/octet-stream" />
@@ -126,7 +126,9 @@ The auto update helper also adds the `PreUpdateApplication` message that is disp
 
 ## Always increment `build`
 
-When using this helper you must always increment `build` in the `app.yml` file. That is the value that is used to determine if a new update is available. Refer to the [Levure documentation on Version information](https://github.com/trevordevore/levure/wiki/packager#version-information) for more info.
+When using this helper with an application that is deployed on macOS you must always increment `build` in the `app.yml` file. That is the value that is used to determine if a new update is available on macOS. Refer to the [Levure documentation on Version information](https://github.com/trevordevore/levure/wiki/packager#version-information) for more info.
+
+On Windows the entire `version` + `build` string is checked (e.g. 1.0.1.52).
 
 ## Packaging your application
 
