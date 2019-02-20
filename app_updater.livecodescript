@@ -337,10 +337,14 @@ Summary: Callback sent if an error occurs.
 Description:
 winSparkle doesn't send an error parameter.
 */
-on sparkleDidAbortWithError pError
-  if pError["description"] is not empty then
-    if the last char of pError["description"] is not "." then put "." after pError["description"]
-    answer error pError["description"] & cr & cr & "(" & pError["failure reason"] & ")"
+on sparkleDidAbortWithError pErrorA
+  -- 1001: already have the newest version.
+  if pErrorA["code"] is among the items of "1001" then pass sparkleDidAbortWithError
+
+  if pErrorA["description"] is not empty then
+    if the last char of pErrorA["description"] is not "." then put "." after pErrorA["description"]
+    answer error pErrorA["description"] & cr & cr & \
+          "Error code:" && pErrorA["code"] & cr & "Reason:" && pErrorA["failure reason"]
   end if
   pass sparkleDidAbortWithError
 end sparkleDidAbortWithError
