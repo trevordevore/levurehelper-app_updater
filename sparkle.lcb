@@ -13,7 +13,7 @@ library community.livecode.trevordevore.sparkle
 
   metadata title is "Sparkle"
   metadata author is "TrevorDeVore"
-  metadata version is "0.5.1"
+  metadata version is "0.5.2"
 
   private foreign handler ObjC_SUUpdaterSharedUpdater() \
         returns ObjcId binds to "objc:Sparkle>SUUpdater.+sharedUpdater"
@@ -135,6 +135,8 @@ library community.livecode.trevordevore.sparkle
   private foreign handler ObjC_NSBundleIdentifier(in pObj as ObjcId) \
         returns ObjcId binds to "objc:NSBundle.-bundleIdentifier"
 
+  private foreign handler ObjC_NSErrorCode(in pObj as ObjcId) \
+        returns CInt binds to "objc:NSError.-code"
   private foreign handler ObjC_NSErrorLocalizedFailureReason(in pObj as ObjcId) \
         returns ObjcId binds to "objc:NSError.-localizedFailureReason"
   private foreign handler ObjC_NSErrorLocalizedDescription(in pObj as ObjcId) \
@@ -796,13 +798,16 @@ library community.livecode.trevordevore.sparkle
   private handler DidAbortWithError(in pUpdater as ObjcObject, in pNSError as ObjcObject) returns nothing
     variable tFailureReason as optional ObjcObject
     variable tDescription as optional ObjcObject
+    variable tCode as Integer
     variable tError as Array
 
     unsafe
+      put ObjC_NSErrorCode(pNSError) into tCode
       put ObjC_NSErrorLocalizedFailureReason(pNSError) into tFailureReason
       put ObjC_NSErrorLocalizedDescription(pNSError) into tDescription
     end unsafe
 
+    put tCode into tError["code"]
     if tDescription is not nothing then
       put StringFromNSString(tDescription) into tError["description"]
     end if
