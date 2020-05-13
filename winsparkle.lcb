@@ -76,9 +76,8 @@ library community.livecode.trevordevore.winsparkle
   foreign handler win_sparkle_set_update_cancelled_callback (in pHandler as win_sparkle_update_cancelled_callback_t) \
         returns nothing binds to "c:winsparkle>win_sparkle_set_update_cancelled_callback!cdecl"
 
-
   /* VARIABLES */
-
+  variable mCanShutdownForUpdate as Integer
 
   /* PUBLIC HANDLERS */
 
@@ -98,6 +97,7 @@ library community.livecode.trevordevore.winsparkle
   */
   public handler winSparkleInitialize() returns nothing
     unsafe
+      put 1 into mCanShutdownForUpdate
       SetupCallbacks()
       win_sparkle_init()
     end unsafe
@@ -148,6 +148,26 @@ library community.livecode.trevordevore.winsparkle
     unsafe
       win_sparkle_set_langid(pLangId)
     end unsafe
+  end handler
+
+
+  /**
+  Summary: Summary
+
+  Description:
+  LiveCode Builder is unable to `send` a message to the LiveCode Script environment during the `CanShutdownForUpdate()` callback.
+  Thus, this library cannot send teh `sparkleShouldPostponeRelaunchForUpdate` message and ask the developer to specify
+  whether or not the update should be installed. This setter allows the developer to set whether or not the app can shutdown.
+  This is only useful if the application calls this handler whenever the ability to update changes while using the app.
+
+  Returns: nothing
+  */
+  public handler winSparkleSetCanShutdownForUpdate(in pCanShutdown as Boolean) returns nothing
+    if pCanShutdown then
+      put 1 into mCanShutdownForUpdate
+    else
+      put 0 into mCanShutdownForUpdate
+    end if
   end handler
 
 
@@ -450,9 +470,20 @@ library community.livecode.trevordevore.winsparkle
     post "sparkleDidAbortWithError"
   end handler
 
-  handler CanShutdownForUpdate() returns Number
-    post "sparkleShouldPostponeRelaunchForUpdate"
-    return 1
+  handler CanShutdownForUpdate() returns CInt
+    return mCanShutdownForUpdate
+    // `send` fails in this callback. An error is probably being thrown because
+    // `senc` cannot be used in this context. No error is actually reported but
+    // code stops executing.
+    -- send "sparkleShouldPostponeRelaunchForUpdate"
+    -- if the message was handled then
+    --   variable tResult as Number
+    --   parse the result as number into tResult
+    --   log "tResult: %@" with [tResult]
+    --   return tResult
+    -- else
+    --   return 1
+    -- end if
   end handler
 
 end library
