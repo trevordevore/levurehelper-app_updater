@@ -3,9 +3,13 @@ libraries:
 extensions:
   - filename: sparkle.lcm
     source: sparkle.lcb
+    code:
+      - Sparkle.framework
     platform: macos
   - filename: winsparkle.lcm
     source: winsparkle.lcb
+    code:
+      - WinSparkle.dll
     platform: windows
 register components:
   - key: app updater
@@ -13,4 +17,13 @@ register components:
     target platform: package folder
     destination: update
     callback stackfile: app_updater_packager.livecodescript
+package files:
+  - filename: code/x86-win32/WinSparkle.dll
+    destination: ./Externals
+    platform: windows
+    architecture: 32
+package folders:
+  - filename: code/x86_64-mac/Sparkle.framework
+    destination: ./Externals
+    platform: macos
 packager callbacks stackfile: app_updater_packager.livecodescript

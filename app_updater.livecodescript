@@ -8,13 +8,6 @@ local sReadyToUse = "false"
 on libraryStack
   if the target is not me then pass libraryStack
 
-  if the environment is "standalone application" then
-    if the platform is "macos" then
-      set the revLibraryMapping["sparkle"] to "./Externals/Sparkle.framework"
-    else if the platform is "win32" then
-      set the revLibraryMapping["winsparkle"] to "./Externals/WinSparkle.dll"
-    end if
-  end if
 end libraryStack
 
 
