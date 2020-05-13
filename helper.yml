@@ -22,6 +22,10 @@ package files:
     destination: ./Externals
     platform: windows
     architecture: 32
+  - filename: code/x86_64-win32/WinSparkle.dll
+    destination: ./Externals
+    platform: windows
+    architecture: 64
 package folders:
   - filename: code/x86_64-mac/Sparkle.framework
     destination: ./Externals
