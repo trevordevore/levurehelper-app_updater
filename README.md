@@ -3,7 +3,7 @@
 Levure helper that provides auto updates for desktop applications on macOS and Windows.
 
 LiveCode Requirements: >= 9.0.2
-Sparkle version: 1.20
+Sparkle version: 1.22
 WinSparkle version: 0.6.0
 
 To use this helper in your Levure application add the `levurehelper-app_updater` folder (you can rename it to `app_updater`) directly to your `./app/helpers` folder or add a reference to the folder to the list of `helpers` in the `app.yml` file.
@@ -60,10 +60,7 @@ You need to change the `APP-NAME` string to be the name of your app executable. 
 
 There are a couple of configuration options that need to be added to your `app.yml` file. 
 
-In the `build profiles` > `all profiles` > `copy files` section add the following:
-
-1. An `app updater` key that points to the `appcast.xml` file for your app. 
-2. `macos` and `windows` sections that move the `Sparkle.framework` and `WinSparkle.dll` files to their proper locations when packaging a standalone application.
+In the `build profiles` > `all profiles` > `copy files` section add the following an `app updater` key that points to the `appcast.xml` file for your app.
 
 You will also add a `build profiles` entry for `installer name` that tells the auto updater the name of the installers to download.
 
@@ -79,12 +76,6 @@ build profiles:
     copy files:
       app updater:
         - filename: ../build files/appcast.xml
-      macos: 
-        - filename: ./helpers/app_updater/code/x86_64-mac/Sparkle.framework
-          destination: ./Externals
-      windows:
-        - filename: ./helpers/app_updater/code/x86-win32/WinSparkle.dll
-          destination: ./Externals
     installer name:
       all platforms: My App
   beta:
