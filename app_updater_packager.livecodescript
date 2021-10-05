@@ -58,6 +58,17 @@ command packagingComplete pBuildProfile, pOutputFolder
   put pOutputFolder & "/update/" & _versionStringForFilenames() into tUpdaterFolder
   dispatch "packagerCreateAllFoldersInPath" to stack "Levure Framework Application Packager" \
         with tUpdaterFolder, pOutputFolder
+
+  if there is a file (pOutputFolder & "/release-notes.html") then
+    local tError
+
+    rename file (pOutputFolder & "/release-notes.html") to (tUpdaterFolder & "/release-notes.html")
+    put the result into tError
+
+    if tError is not empty then
+      answer error "Error renaming release-notes.html file:" && tError & "."
+    end if
+  end if
 end packagingComplete
 
 

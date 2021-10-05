@@ -60,7 +60,10 @@ You need to change the `APP-NAME` string to be the name of your app executable. 
 
 There are a couple of configuration options that need to be added to your `app.yml` file. 
 
-In the `build profiles` > `all profiles` > `copy files` section add the following an `app updater` key that points to the `appcast.xml` file for your app.
+In the `build profiles` > `all profiles` > `copy files` section add the following two keys (see full example below):
+
+- An `app updater` key that points to the `appcast.xml` file for your app.
+- A `package folder` key that points to a `release-notes.html` template file for your app. This file will be loaded into the auto update window to show the user what has changed. You will need to manually update this each time you package a new version of your application.
 
 You will also add a `build profiles` entry for `installer name` that tells the auto updater the name of the installers to download.
 
@@ -76,6 +79,8 @@ build profiles:
     copy files:
       app updater:
         - filename: ../build files/appcast.xml
+      package folder:
+        - filename: ../build files/release-notes.html
     installer name:
       all platforms: My App
   beta:
