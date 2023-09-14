@@ -27,7 +27,7 @@ package files:
     platform: windows
     architecture: 64
 package folders:
-  - filename: code/x86_64-mac/Sparkle.framework
+  - filename: code/universal-mac/Sparkle.framework
     destination: ./Externals
     platform: macos
 packager callbacks stackfile: app_updater_packager.livecodescript
