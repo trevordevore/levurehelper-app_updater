@@ -3,7 +3,7 @@
 Levure helper that provides auto updates for desktop applications on macOS and Windows.
 
 LiveCode Requirements: >= 9.0.2
-Sparkle version: 1.23
+Sparkle version: 1.27.1; Supports macOS > = 10.9
 WinSparkle version: 0.7.0
 
 To use this helper in your Levure application add the `levurehelper-app_updater` folder (you can rename it to `app_updater`) directly to your `./app/helpers` folder or add a reference to the folder to the list of `helpers` in the `app.yml` file.
